@@ -67,7 +67,13 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+
+        // Math.floor()
+        int pageSize = BufferPool.getPageSize();
+        int tupleSize = td.getSize();
+        //  * 1.0 否则会除法直接整了，也就会导致bug
+        int tupleNum = (int)Math.floor((pageSize * 8 * 1.0) / (tupleSize * 8 + 1));
+        return tupleNum;
 
     }
 
@@ -78,7 +84,8 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        return (int)Math.ceil(getNumTuples() * 1.0 / 8);
+
                  
     }
     
@@ -112,7 +119,8 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+    // throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -282,7 +290,14 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        // int detbit = 1;
+        int cnt = 0;
+        for(int i = 0; i < numSlots; ++i) {
+            if(!isSlotUsed(i)) {
+                cnt++;
+            }
+        }
+        return cnt;
     }
 
     /**
@@ -290,7 +305,10 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        int quot = i / 8;
+        int remainder = i % 8;
+        int flag = (header[quot] >> remainder) & 0x01;
+        return flag == 1;
     }
 
     /**
@@ -307,7 +325,13 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        ArrayList<Tuple> l = new ArrayList<Tuple>();
+        for(int i = 0; i < numSlots; ++i) {
+            if(isSlotUsed(i)) {
+                l.add(tuples[i]);
+            }
+        }
+        return l.iterator();
     }
 
 }

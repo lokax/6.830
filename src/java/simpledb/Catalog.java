@@ -1,5 +1,7 @@
 package simpledb;
 
+import javafx.scene.control.Tab;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -17,6 +19,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
+    // <ID, Table> k/v pair.
+    HashMap<Integer, Table> IdMapTable;
+    // HashMap<String, Integer> nameMapId;
+    class Table{
+
+      private DbFile tblFile;
+      // private TupleDesc schema;
+      private String tblName;
+      private String pKey;
+
+      public Table(DbFile file, String name, String pk) {
+          tblFile = file;
+          tblName = name;
+          pKey = pk;
+      }
+
+    };
 
     /**
      * Constructor.
@@ -24,6 +43,8 @@ public class Catalog {
      */
     public Catalog() {
         // some code goes here
+        IdMapTable = new HashMap<Integer, Table>();
+        // nameMapId = new HashMap<String, Integer>();
     }
 
     /**
@@ -37,6 +58,9 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+        Table tbl = new Table(file, name, pkeyField);
+        IdMapTable.put(file.getId(), tbl);
+        // nameMapId.put(name, file.getId());
     }
 
     public void addTable(DbFile file, String name) {
@@ -60,7 +84,20 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+        /**
+         * Integer result = hashTable.searchValues(1, value -> {
+         * 92     	    if(value.tableName.equals(name)){
+         * 93     	    	return value.dbFile.getId();
+         * 94     	    }
+         * 95 			return null;
+         * 96     	});
+         */
+        for(Map.Entry<Integer, Table> e : IdMapTable.entrySet()) {
+            if(e.getValue().tblName.equals(name)) {
+                return e.getKey().intValue();
+            }
+        }
+        throw new NoSuchElementException("table doesn't exist");
     }
 
     /**
@@ -71,7 +108,8 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+
+        return IdMapTable.get(tableid).tblFile.getTupleDesc();
     }
 
     /**
@@ -82,27 +120,30 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+
+        return IdMapTable.get(tableid).tblFile;
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+        return IdMapTable.get(tableid).pKey;
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+        return IdMapTable.keySet().iterator();
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+
+        return IdMapTable.get(id).tblName;
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
         // some code goes here
+        IdMapTable.clear();
     }
     
     /**
@@ -116,7 +157,7 @@ public class Catalog {
             BufferedReader br = new BufferedReader(new FileReader(new File(catalogFile)));
             
             while ((line = br.readLine()) != null) {
-                //assume line is of the format name (field type, field type, ...)
+                //assume line is of the format  name (field type, field type, ...)
                 String name = line.substring(0, line.indexOf("(")).trim();
                 //System.out.println("TABLE NAME: " + name);
                 String fields = line.substring(line.indexOf("(") + 1, line.indexOf(")")).trim();

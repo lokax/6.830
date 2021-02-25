@@ -85,7 +85,7 @@ public class TupleDesc implements Serializable {
         // some code goes here
         tdItems = new TDItem[typeAr.length];
         for(int i = 0; i < typeAr.length; ++i) {
-            tdItems[i] = new TDItem(typeAr[i], "");
+            tdItems[i] = new TDItem(typeAr[i], "null");
         }
     }
     /**

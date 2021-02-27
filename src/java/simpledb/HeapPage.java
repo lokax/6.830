@@ -86,7 +86,6 @@ public class HeapPage implements Page {
         // some code goes here
         return (int)Math.ceil(getNumTuples() * 1.0 / 8);
 
-                 
     }
     
     /** Return a view of this page before it was modified

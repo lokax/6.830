@@ -1,10 +1,9 @@
 package simpledb;
 
+import jdk.jshell.spi.ExecutionControl;
+
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * Knows how to compute some aggregate over a set of IntFields.
@@ -107,32 +106,118 @@ public class IntegerAggregator implements Aggregator {
             itr = null;
             tpArr = new ArrayList<>();
             td = getTupleDesc();
+            Tuple t = new Tuple(td);
+            Field k = null;
+            Field f = null;
+            if(gbfield == NO_GROUPING) {
+                // Tuple t = new Tuple(td);
+                f = new IntField(excuteOp((ArrayList<Integer>) group));
+                t.setField(0, f);
+            } else {
+
+                for(Map.Entry e : ((HashMap<Integer, ArrayList<Integer>>) group).entrySet()) {
+                    int res = excuteOp((ArrayList<Integer>) e.getValue());
+                    f = new IntField(res);
+                    if(gbfieldtype == Type.INT_TYPE) {
+                        // Tuple t = new Tuple(td);
+                        // f = new IntField(res);
+                        k = new IntField((int)e.getKey());
+                        t.setField(0, k);
+                        t.setField(1, f);
+                        tpArr.add(t);
+                        // break;
+                    }
+
+                    if(gbfieldtype == Type.STRING_TYPE) {
+                        // Tuple t = new Tuple(td);
+                        String gbName = (String) e.getKey();
+                        k = new StringField(gbName, gbName.length());
+                        // f = new IntField(res);
+                        t.setField(0, k);
+                        t.setField(1, f);
+                        tpArr.add(t);
+                        // break;
+                    }
+                }
+            }
+
         }
 
 
+        private int excuteOp(ArrayList<Integer> arr) {
+            assert(!arr.isEmpty());
+            int res = 0;
+            switch (what) {
+                case MIN:
+                    res = arr.get(0);
+                    for(int elem : arr) {
+                        if(elem < res) {
+                            res = elem;
+                        }
+                    }
+                    break;
+                case MAX:
+                    res = arr.get(0);
+                    for(int elem : arr) {
+                        if(elem > res) {
+                            res = elem;
+                        }
+                    }
+                    break;
+                case SUM:
+                    for(int elem : arr) {
+                        res += elem;
+                    }
+                    break;
+                case AVG:
+                    for(int elem : arr) {
+                        res += elem;
+                    }
+                    res /= arr.size();
+                    break;
+                case SUM_COUNT:
+                    throw new UnsupportedOperationException("unimplemented");
+                case SC_AVG:
+                    throw new UnsupportedOperationException("unimplemented");
+            }
+            return res;
+
+        }
+
         @Override
         public void open() throws DbException, TransactionAbortedException {
-            
+            itr = tpArr.iterator();
         }
 
         @Override
         public void close() {
-
+            itr = null;
         }
 
         @Override
         public boolean hasNext() throws DbException, TransactionAbortedException {
-            return false;
+            if(itr == null) {
+                return false;
+            }
+            if(itr.hasNext()) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override
         public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-            return null;
+            if(itr == null) {
+                throw new NoSuchElementException("itr == null");
+            }
+            return itr.next();
         }
 
         @Override
         public void rewind() throws DbException, TransactionAbortedException {
-
+            close();
+            open();
         }
 
         @Override
@@ -140,7 +225,7 @@ public class IntegerAggregator implements Aggregator {
             if(gbfield == NO_GROUPING) {
                 return new TupleDesc(new Type[]{Type.INT_TYPE});
             } else {
-                return new TupleDesc(new Type[] {Type.STRING_TYPE, Type.INT_TYPE});
+                return new TupleDesc(new Type[] {gbfieldtype, Type.INT_TYPE});
             }
         }
     }
@@ -155,8 +240,9 @@ public class IntegerAggregator implements Aggregator {
      */
     public OpIterator iterator() {
         // some code goes here
-        throw new
-        UnsupportedOperationException("please implement me for lab2");
+        // throw new
+        // UnsupportedOperationException("please implement me for lab2");
+        return new InterAggrIterator();
     }
 
 }

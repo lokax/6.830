@@ -106,11 +106,12 @@ public class IntegerAggregator implements Aggregator {
             itr = null;
             tpArr = new ArrayList<>();
             td = getTupleDesc();
-            Tuple t = new Tuple(td);
+
             Field k = null;
             Field f = null;
             if(gbfield == NO_GROUPING) {
                 // Tuple t = new Tuple(td);
+                Tuple t = new Tuple(td);
                 f = new IntField(excuteOp((ArrayList<Integer>) group));
                 t.setField(0, f);
             } else {
@@ -118,6 +119,7 @@ public class IntegerAggregator implements Aggregator {
                 for(Map.Entry e : ((HashMap<Integer, ArrayList<Integer>>) group).entrySet()) {
                     int res = excuteOp((ArrayList<Integer>) e.getValue());
                     f = new IntField(res);
+                    Tuple t = new Tuple(td);
                     if(gbfieldtype == Type.INT_TYPE) {
                         // Tuple t = new Tuple(td);
                         // f = new IntField(res);

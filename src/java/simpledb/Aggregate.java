@@ -15,6 +15,7 @@ public class Aggregate extends Operator {
     private int gfield;
     private Aggregator.Op aop;
     private Aggregator ag;
+    private OpIterator itr;
     /**
      * Constructor.
      * 
@@ -39,6 +40,7 @@ public class Aggregate extends Operator {
         this.afield = afield;
         this.gfield = gfield;
         this.aop = aop;
+        this.itr = null;
         Type gtype = Type.INT_TYPE;
         if(child.getTupleDesc().getFieldType(gfield) == Type.STRING_TYPE) {
             gtype = Type.STRING_TYPE;
@@ -109,6 +111,14 @@ public class Aggregate extends Operator {
 	    TransactionAbortedException {
 	// some code goes here
         child.open();
+        while(child.hasNext()) {
+            Tuple t = child.next();
+            ag.mergeTupleIntoGroup(t);
+        }
+        child.close();
+        itr = ag.iterator();
+        itr.open();
+
     }
 
     /**
@@ -120,11 +130,15 @@ public class Aggregate extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
 	// some code goes here
-	return null;
+        if(itr.hasNext()) {
+            return itr.next();
+        }
+	    return null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
 	// some code goes here
+
     }
 
     /**
@@ -145,6 +159,7 @@ public class Aggregate extends Operator {
 
     public void close() {
 	// some code goes here
+        itr = null;
     }
 
     @Override

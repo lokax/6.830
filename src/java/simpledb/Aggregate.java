@@ -105,16 +105,23 @@ public class Aggregate extends Operator {
         child.open();
         super.open();
 
-        // Type gtype = Type.INT_TYPE;
-        if(gfield == Aggregator.NO_GROUPING) {
-            ag = new IntegerAggregator(gfield, Type.INT_TYPE, afield, aop);
-        } else {
-            if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE) {
+        if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE) {
+            if(gfield == Aggregator.NO_GROUPING) {
                 ag = new IntegerAggregator(gfield, Type.INT_TYPE, afield, aop);
             } else {
-                ag = new StringAggregator(gfield, Type.STRING_TYPE, afield, aop);
+                ag = new IntegerAggregator(gfield, child.getTupleDesc().getFieldType(gfield), afield, aop);
             }
+
+        } else {
+            if(gfield == Aggregator.NO_GROUPING) {
+                ag = new StringAggregator(gfield, Type.INT_TYPE, afield, aop);
+            } else {
+                ag = new StringAggregator(gfield, child.getTupleDesc().getFieldType(gfield), afield, aop);
+            }
+
         }
+
+
 
         while(child.hasNext()) {
             Tuple t = child.next();

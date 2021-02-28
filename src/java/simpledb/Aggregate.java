@@ -41,15 +41,7 @@ public class Aggregate extends Operator {
         this.gfield = gfield;
         this.aop = aop;
         this.itr = null;
-        Type gtype = Type.INT_TYPE;
-        if(child.getTupleDesc().getFieldType(gfield) == Type.STRING_TYPE) {
-            gtype = Type.STRING_TYPE;
-        }
-        if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE) {
-            ag = new IntegerAggregator(gfield, gtype, afield, aop);
-        } else {
-            ag = new StringAggregator(gfield, gtype, afield, aop);
-        }
+
     }
 
     /**
@@ -100,7 +92,7 @@ public class Aggregate extends Operator {
      * */
     public Aggregator.Op aggregateOp() {
 	// some code goes here
-	return aop;
+	    return aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
@@ -111,6 +103,19 @@ public class Aggregate extends Operator {
 	    TransactionAbortedException {
 	// some code goes here
         child.open();
+        super.open();
+
+        // Type gtype = Type.INT_TYPE;
+        if(gfield == Aggregator.NO_GROUPING) {
+            ag = new IntegerAggregator(gfield, Type.INT_TYPE, afield, aop);
+        } else {
+            if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE) {
+                ag = new IntegerAggregator(gfield, Type.INT_TYPE, afield, aop);
+            } else {
+                ag = new StringAggregator(gfield, Type.STRING_TYPE, afield, aop);
+            }
+        }
+
         while(child.hasNext()) {
             Tuple t = child.next();
             ag.mergeTupleIntoGroup(t);
@@ -118,7 +123,6 @@ public class Aggregate extends Operator {
         child.close();
         itr = ag.iterator();
         itr.open();
-
     }
 
     /**
@@ -138,7 +142,8 @@ public class Aggregate extends Operator {
 
     public void rewind() throws DbException, TransactionAbortedException {
 	// some code goes here
-
+        close();
+        open();
     }
 
     /**
@@ -154,23 +159,34 @@ public class Aggregate extends Operator {
      */
     public TupleDesc getTupleDesc() {
 	// some code goes here
-	return null;
+        if(gfield == Aggregator.NO_GROUPING) {
+            return new TupleDesc(new Type[]{Type.INT_TYPE}, new String[] { aop.toString() + "(" +
+                    child.getTupleDesc().getFieldName(afield) + ")"});
+        }
+        Type tyArr[] = new Type[] { child.getTupleDesc().getFieldType(gfield), Type.INT_TYPE};
+        String str[] = new String[] {child.getTupleDesc().getFieldName(gfield),  aop.toString() + "(" +
+                    child.getTupleDesc().getFieldName(afield) + ")"};
+	    return new TupleDesc(tyArr, str);
     }
 
     public void close() {
 	// some code goes here
+        // child.close(); bug!!!
+        super.close();
         itr = null;
+        ag = null;
     }
 
     @Override
     public OpIterator[] getChildren() {
 	// some code goes here
-	return null;
+	return new OpIterator[] { child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
 	// some code goes here
+        child = children[0];
     }
     
 }

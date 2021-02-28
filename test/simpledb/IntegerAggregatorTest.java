@@ -19,6 +19,8 @@ public class IntegerAggregatorTest extends SimpleDbTestBase {
   int[][] min = null;
   int[][] max = null;
   int[][] avg = null;
+  int[][] avg1 = null;
+  OpIterator scan2;
 
   /**
    * Initialize each unit test
@@ -32,6 +34,14 @@ public class IntegerAggregatorTest extends SimpleDbTestBase {
                     3, 4,
                     3, 6,
                     5, 7 });
+
+    this.scan2 = TestUtil.createTupleList(1,
+            new int[]{1,
+                      1,
+                      2,
+                      3,
+
+            });
 
     // verify how the results progress after a few merges
     this.sum = new int[][] {
@@ -60,6 +70,12 @@ public class IntegerAggregatorTest extends SimpleDbTestBase {
       { 1, 3 },
       { 1, 4 },
       { 1, 4, 3, 2 }
+    };
+    this.avg1 = new int[][] {
+            {1},
+            {1},
+            {1},
+            {1}
     };
   }
 
@@ -123,6 +139,20 @@ public class IntegerAggregatorTest extends SimpleDbTestBase {
       it = agg.iterator();
       it.open();
       TestUtil.matchAllTuples(TestUtil.createTupleList(width1, step), it);
+    }
+  }
+
+  // my test for debug !!!
+  @Test public void mergeAvg1() throws Exception {
+    scan2.open();
+    IntegerAggregator agg = new IntegerAggregator(Aggregator.NO_GROUPING, Type.INT_TYPE, 0, Aggregator.Op.AVG);
+
+    OpIterator it;
+    for (int[] step : avg1) {
+      agg.mergeTupleIntoGroup(scan2.next());
+      it = agg.iterator();
+      it.open();
+      TestUtil.matchAllTuples(TestUtil.createTupleList(1, step), it);
     }
   }
 

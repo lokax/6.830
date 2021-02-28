@@ -114,6 +114,7 @@ public class IntegerAggregator implements Aggregator {
                 Tuple t = new Tuple(td);
                 f = new IntField(excuteOp((ArrayList<Integer>) group));
                 t.setField(0, f);
+                tpArr.add(t);
             } else {
 
                 for(Map.Entry e : ((HashMap<Integer, ArrayList<Integer>>) group).entrySet()) {
@@ -176,6 +177,9 @@ public class IntegerAggregator implements Aggregator {
                         res += elem;
                     }
                     res /= arr.size();
+                    break;
+                case COUNT:
+                    res = arr.size();
                     break;
                 case SUM_COUNT:
                     throw new UnsupportedOperationException("unimplemented");

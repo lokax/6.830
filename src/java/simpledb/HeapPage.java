@@ -252,6 +252,33 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        int index = equalIndex(t);
+        if(index == -1) {
+            throw new DbException("tuple is not on this page");
+        }
+        if(!isSlotUsed(index)) {
+            throw new DbException("tuple slot is already empty");
+        }
+        markSlotUsed(index, false);
+
+    }
+
+    private int equalIndex(Tuple t) {
+        for(int i = 0; i < numSlots; ++i) {
+            if(tuples[i].equals(t)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int findEmptySlot() {
+        for(int i = 0; i < numSlots; ++i) {
+            if(!isSlotUsed(i)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -264,6 +291,17 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+
+        if(!t.getTupleDesc().equals(td)) {
+            throw new DbException("td is mismatch");
+        }
+        int index = findEmptySlot();
+        if(index == -1) {
+            throw new DbException("page is full, not empty slot");
+        }
+        tuples[index] = t;
+        markSlotUsed(index, true);
+
     }
 
     /**
@@ -316,7 +354,16 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+        int quot = i / 8;
+        int remainder = (i % 8);
+        if(value) {
+            header[quot] = (byte) (header[quot] | (0x1 << remainder));
+        } else {
+            header[quot] = (byte) (header[quot] & (~(0x1 << remainder)));
+        }
+
     }
+
 
     /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)

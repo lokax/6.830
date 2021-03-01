@@ -123,14 +123,19 @@ public class HeapFile implements DbFile {
         // some code goes here
         return null;
         // not necessary for lab1
+
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
         // some code goes here
-        return null;
+
         // not necessary for lab1
+        ArrayList<Page> mdfPage = new ArrayList<>();
+
+
+
     }
 
     private class HeapFileIterator implements DbFileIterator{

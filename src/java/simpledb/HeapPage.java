@@ -256,7 +256,9 @@ public class HeapPage implements Page {
         // not necessary for lab1
         // int tupleId = equalIndex(t);
         int tupleId = t.getRecordId().getTupleNumber();
-
+        if(t.getRecordId().getPageId() != getId()) {
+            throw new DbException("tuple is not on this page");
+        }
         if(tuples[tupleId] == null) {
             throw new DbException("tuple is not on this page");
         }
@@ -301,7 +303,7 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
-
+        // 插入时时自己设置recordId不需要去判断pageid是否相等。
         if(!t.getTupleDesc().equals(td)) {
             throw new DbException("td is mismatch");
         }

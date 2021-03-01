@@ -2,7 +2,10 @@ package simpledb;
 
 import java.io.*;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -80,7 +83,8 @@ public class BufferPool {
         Page p = pageBuffer.getOrDefault(pid, null);
         if(p == null) {
           if(currentSize == maxSize) {
-            throw new DbException("currentSize == maxSize, no more space!");
+            // throw new DbException("currentSize == maxSize, no more space!");
+              evictPage();
           }
           p = dbfile.readPage(pid);
           pageBuffer.put(pid, p);
@@ -152,6 +156,23 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        DbFile dbfile = Database.getCatalog().getDatabaseFile(tableId);
+        ArrayList<Page> mdPageList =  dbfile.insertTuple(tid, t);
+        PageId pid = null;
+        for(Page p : mdPageList) {
+            pid = p.getId();
+            p.markDirty(true, tid);
+            if(!pageBuffer.containsKey(pid)) {
+                if(currentSize == maxSize) {
+                    evictPage();
+                }
+                pageBuffer.put(pid, p);
+                currentSize++;
+            }
+
+            // TODO 解决bug
+        }
+
     }
 
     /**
@@ -171,6 +192,21 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        DbFile dbfile = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+        ArrayList<Page> mdPageList = dbfile.deleteTuple(tid, t);
+        PageId pid = null;
+        for(Page p : mdPageList) {
+            pid = p.getId();
+            p.markDirty(true, tid);
+            if(!pageBuffer.containsKey(pid)) {
+                if(currentSize == maxSize) {
+                    evictPage();
+                }
+                pageBuffer.put(pid, p);
+                currentSize++;
+            }
+            // TODO 解决bug
+        }
     }
 
     /**
@@ -220,6 +256,12 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+        for( Map.Entry e : pageBuffer.entrySet()) {
+            PageId key = (PageId)e.getKey();
+            pageBuffer.remove(key);
+            currentSize--;
+            break;
+        }
     }
 
 }

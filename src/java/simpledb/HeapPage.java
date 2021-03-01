@@ -18,8 +18,9 @@ public class HeapPage implements Page {
     final byte header[];
     final Tuple tuples[];
     final int numSlots;
-
     byte[] oldData;
+    private boolean isDirty;
+    private TransactionId tid;
     private final Byte oldDataLock=new Byte((byte)0);
 
     /**
@@ -42,6 +43,7 @@ public class HeapPage implements Page {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
+        this.isDirty = false;
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page
@@ -252,26 +254,34 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
-        int index = equalIndex(t);
-        if(index == -1) {
+        // int tupleId = equalIndex(t);
+        int tupleId = t.getRecordId().getTupleNumber();
+
+        if(tuples[tupleId] == null) {
             throw new DbException("tuple is not on this page");
         }
-        if(!isSlotUsed(index)) {
+        if(!isSlotUsed(tupleId)) {
             throw new DbException("tuple slot is already empty");
         }
-        markSlotUsed(index, false);
+        tuples[tupleId] = null;
+        markSlotUsed(tupleId, false);
+        // isDirty = true;
 
     }
-
+/**
     private int equalIndex(Tuple t) {
         for(int i = 0; i < numSlots; ++i) {
-            if(tuples[i].equals(t)) {
-                return i;
+            // tuple 没有实现equals函数导致了bug的出现。
+            if(isSlotUsed(i)) {
+                assert (tuples[i] != null);
+                if(tuples[i].equals(t)) {
+                    return i;
+                }
             }
         }
         return -1;
     }
-
+*/
     private int findEmptySlot() {
         for(int i = 0; i < numSlots; ++i) {
             if(!isSlotUsed(i)) {
@@ -299,6 +309,8 @@ public class HeapPage implements Page {
         if(index == -1) {
             throw new DbException("page is full, not empty slot");
         }
+        RecordId rid = new RecordId(pid, index);
+        t.setRecordId(rid);
         tuples[index] = t;
         markSlotUsed(index, true);
 
@@ -311,6 +323,8 @@ public class HeapPage implements Page {
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
 	// not necessary for lab1
+        isDirty = dirty;
+        this.tid = tid;
     }
 
     /**
@@ -319,7 +333,11 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return null;      
+        if(isDirty == false) {
+            return null;
+        }
+        return tid;
+
     }
 
     /**

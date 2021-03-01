@@ -1,6 +1,8 @@
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -106,6 +108,7 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for lab1
+
     }
 
     /**
@@ -121,9 +124,53 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        return null;
         // not necessary for lab1
+        ArrayList<Page> mdPage = new ArrayList<>();
+        HeapPage page = null;
+        PageId pid = null;
+        for(int i = 0; i < numPages(); i++) {
+            pid = new HeapPageId(getId(), i);
+            page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+            int numEmptySlots = page.getNumEmptySlots();
+            if(numEmptySlots == 0) {
+                continue;
+            }
+            page.insertTuple(t);
+            // page.markDirty(true, tid);
+            mdPage.add(page);
+            return mdPage;
+        }
+        appendPageToEnd();
+        pid = new HeapPageId(getId(), numPages() - 1);
+        // RecordId rid = new RecordId(pid, );
+        page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+        page.insertTuple(t);
+        // page.markDirty(true, tid);
+        mdPage.add(page);
+        return mdPage;
 
+
+    }
+
+    private void appendPageToEnd() {
+        int pLen = numPages();
+        RandomAccessFile file = null;
+        try {
+            file = new RandomAccessFile(f, "rw");
+            file.seek(pLen * BufferPool.getPageSize());
+            byte[] data = new byte[BufferPool.getPageSize()];
+            Arrays.fill(data, (byte)0);
+            file.write(data, 0, BufferPool.getPageSize());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try{
+                file.close();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+
+        }
     }
 
     // see DbFile.java for javadocs
@@ -133,9 +180,12 @@ public class HeapFile implements DbFile {
 
         // not necessary for lab1
         ArrayList<Page> mdfPage = new ArrayList<>();
-
-
-
+        RecordId rid = t.getRecordId();
+        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, rid.getPageId(), Permissions.READ_WRITE);
+        page.deleteTuple(t);
+        // page.markDirty(true, tid);
+        mdfPage.add(page);
+        return mdfPage;
     }
 
     private class HeapFileIterator implements DbFileIterator{

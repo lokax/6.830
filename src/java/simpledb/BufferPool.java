@@ -32,6 +32,7 @@ public class BufferPool {
 
     // private Page[] pageBuffer;
     private HashMap<PageId, Page> pageBuffer;
+    private ArrayList<PageId> pageIdList;
     private int currentSize;
     private int maxSize;
     /**
@@ -43,6 +44,7 @@ public class BufferPool {
         // some code goes here
         // pageBuffer = new Page[numPages];
         pageBuffer = new HashMap<>();
+        pageIdList = new ArrayList<>();
         currentSize = 0;
         maxSize = numPages;
     }
@@ -88,6 +90,7 @@ public class BufferPool {
           }
           p = dbfile.readPage(pid);
           pageBuffer.put(pid, p);
+          pageIdList.add(pid);
           currentSize++;
         }
         return p;
@@ -167,6 +170,7 @@ public class BufferPool {
                     evictPage();
                 }
                 pageBuffer.put(pid, p);
+                pageIdList.add(pid);
                 currentSize++;
             }
 
@@ -203,6 +207,7 @@ public class BufferPool {
                     evictPage();
                 }
                 pageBuffer.put(pid, p);
+                pageIdList.add(pid);
                 currentSize++;
             }
             // TODO 解决bug
@@ -256,11 +261,18 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+        /**
         for( Map.Entry e : pageBuffer.entrySet()) {
             PageId key = (PageId)e.getKey();
             pageBuffer.remove(key);
             currentSize--;
             break;
+        }*/
+        if(!pageIdList.isEmpty()) {
+            PageId pid = pageIdList.get(0);
+            pageIdList.remove(0);
+            pageBuffer.remove(pid);
+            currentSize--;
         }
     }
 

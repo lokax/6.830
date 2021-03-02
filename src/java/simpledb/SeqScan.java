@@ -124,7 +124,7 @@ public class SeqScan implements OpIterator {
     public void close() {
         // some code goes here
         dbItr.close();
-        dbItr = null;
+        // dbItr = null; // 不知道加了会不会导致bug，如果用户重复close则会引发空指针异常，不加或许包容性更强一些？
     }
 
     public void rewind() throws DbException, NoSuchElementException,

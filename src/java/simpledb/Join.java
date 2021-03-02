@@ -88,6 +88,9 @@ public class Join extends Operator {
         // some code goes here
         child1.rewind();
         child2.rewind();
+        // close();
+        // open();
+       leftTuple = child1.hasNext() ? child1.next() : null;
     }
 
     /**

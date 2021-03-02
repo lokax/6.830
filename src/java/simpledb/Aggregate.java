@@ -149,8 +149,11 @@ public class Aggregate extends Operator {
 
     public void rewind() throws DbException, TransactionAbortedException {
 	// some code goes here
-        close();
-        open();
+        close(); // 或许不需要
+        open(); // 或许不需要
+        // 使用以下两个可能会性能更好。
+        // itr = ag.iterator();
+        // itr.open();
     }
 
     /**

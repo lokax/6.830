@@ -222,7 +222,18 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+        int len = pageIdList.size();
+        for(int i = len; i > 0; --i) {
+            PageId pid = pageIdList.get(0);
+            // Page p = pageBuffer.getOrDefault(pid, null);
+            flushPage(pid);
+        }
+        /**
+        while(len > 0) {
+            PageId pid = pageIdList.get(len - 1);
+            flushPage(pid);
+            len = pageIdList.size();
+        }*/
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -241,6 +252,7 @@ public class BufferPool {
         currentSize--;
     }
 
+
     /**
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
@@ -248,7 +260,16 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
-        
+        Page p = pageBuffer.getOrDefault(pid, null);
+        if(p == null) {
+            return;
+        }
+        DbFile df = Database.getCatalog().getDatabaseFile(p.getId().getTableId());
+        df.writePage(p);
+        pageBuffer.remove(pid);
+        pageIdList.remove(pid);
+        currentSize--;
+
     }
 
     /** Write all pages of the specified transaction to disk.

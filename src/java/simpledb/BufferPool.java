@@ -236,6 +236,9 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
+        pageBuffer.remove(pid);
+        pageIdList.remove(pid);
+        currentSize--;
     }
 
     /**
@@ -245,6 +248,7 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+        
     }
 
     /** Write all pages of the specified transaction to disk.

@@ -64,20 +64,60 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
 
     	// some code goes here
+        if(op.equals(Predicate.Op.EQUALS) && (v < min || v > max)) {
+            return 0.0;
+        }
+        if(op.equals(Predicate.Op.NOT_EQUALS) && (v < min || v > max)) {
+            return 1.0;
+        }
+        if(op.equals((Predicate.Op.GREATER_THAN)) && (v  >= max)) {
+            return 0.0;
+        }
+        if(op.equals(Predicate.Op.LESS_THAN) && (v <= min)) {
+            return 0.0;
+        }
+        if(op.equals(Predicate.Op.GREATER_THAN_OR_EQ) && (v > max)) {
+            return 0.0;
+        }
+        if(op.equals(Predicate.Op.LESS_THAN_OR_EQ) && (v < min)) {
+            return 0.0;
+        }
+        if(op.equals((Predicate.Op.GREATER_THAN)) && (v < min)) {
+            return 1.0;
+        }
+        if(op.equals(Predicate.Op.LESS_THAN) && (v > max)) {
+            return 1.0;
+        }
+        if(op.equals(Predicate.Op.GREATER_THAN_OR_EQ) && (v <= min)) {
+            return 1.0;
+        }
+        if(op.equals(Predicate.Op.LESS_THAN_OR_EQ) && (v >= max)) {
+            return 1.0;
+        }
+
         int pos = (v - min) / this.width;
+        int b_left = min + pos * this.width; // pos所在的最左边界
+        double estimate = 0.0;
         if(op.equals(Predicate.Op.EQUALS)) {
             // equality -- algorithm
-            double estimate = 1.0 * boxs[pos] / this.width;
+            estimate = 1.0 * boxs[pos] / this.width;
             estimate = estimate / nTuples;
 
         } else {
             // inequality -- alg
-            double b_f = 1.0 * boxs[pos] / nTuples;
-            double part = (pos * this.width + 1) - v / this.width;
-            double estimate = b_f * part;
-            return estimate;
+            double b_f = 1.0 * boxs[pos] / nTuples; //
+            if(op.equals(Predicate.Op.GREATER_THAN)) {
+                for(int i = pos + 1; i < boxs.length; ++i) {
+                    estimate += (1.0 * boxs[i]) / nTuples;
+                }
+                double b_p = 1.0 * (this.width - (v - b_left))  / this.width;
+                double inter = b_p * b_f;
+                estimate = estimate + inter;
+
+            }
+
         }
-        return -1.0;
+        return estimate;
     }
     
     /**

@@ -121,7 +121,7 @@ public class IntHistogram {
                 }
                 // double inter = b_p * b_f;
                 // estimate = estimate + b_p * b_f;
-            } else {
+            } else if(op.equals(Predicate.Op.LESS_THAN) || op.equals(Predicate.Op.LESS_THAN_OR_EQ)){
                 for(int i = 0; i < pos; ++i) {
                     estimate += (1.0 * boxs[i]) / nTuples;
                 }
@@ -131,6 +131,11 @@ public class IntHistogram {
                     b_p = 1.0 * (v - b_left + 1) / this.width;
                 }
                 // estimate = estimate + b_p * b_f;
+            } else {
+                assert (op.equals(Predicate.Op.NOT_EQUALS));
+                estimate = 1.0 * boxs[pos] / this.width;
+                estimate = estimate / nTuples;
+                return 1.0 - estimate;
             }
 
         }

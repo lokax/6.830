@@ -9,6 +9,7 @@ public class IntHistogram {
     private int max;
     private int width;
     private int[] boxs;
+    private int tupleSize;
     /**
      * Create a new IntHistogram.
      * 
@@ -32,6 +33,7 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         this.width = (max - min + 1) / buckets; // 100 - 1 + 1 / 10 = 10
+        this.tupleSize = 0;
         if((max - min + 1) % buckets != 0) {
             buckets += 1;
         }
@@ -44,7 +46,9 @@ public class IntHistogram {
      */
     public void addValue(int v) {
     	// some code goes here
-        
+        int index = (v - min) / this.width;
+        boxs[index]++; // tuple size for range.
+        tupleSize++;
     }
 
     /**

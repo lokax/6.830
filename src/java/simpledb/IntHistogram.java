@@ -34,6 +34,10 @@ public class IntHistogram {
         this.max = max;
         this.width = (max - min + 1) / buckets; // 100 - 1 + 1 / 10 = 10
         this.nTuples = 0;
+        if(width == 0) {
+            width = 1;
+            // buckets = max - min + 1;
+        }
         if((max - min + 1) % buckets != 0) {
             buckets += 1;
         }

@@ -106,14 +106,18 @@ public class IntHistogram {
         } else {
             // inequality -- alg
             double b_f = 1.0 * boxs[pos] / nTuples; //
-            if(op.equals(Predicate.Op.GREATER_THAN)) {
+            double b_p;
+            if(op.equals(Predicate.Op.GREATER_THAN) || op.equals(Predicate.Op.GREATER_THAN_OR_EQ)) {
                 for(int i = pos + 1; i < boxs.length; ++i) {
                     estimate += (1.0 * boxs[i]) / nTuples;
                 }
-                double b_p = 1.0 * (this.width - (v - b_left))  / this.width;
-                double inter = b_p * b_f;
-                estimate = estimate + inter;
-
+                if(op.equals(Predicate.Op.GREATER_THAN)){
+                    b_p = 1.0 * (this.width - (v - b_left) + 1)  / this.width;
+                } else {
+                    b_p = 1.0 * (this.width - (v - b_left))  / this.width;
+                }
+                // double inter = b_p * b_f;
+                estimate = estimate + b_p * b_f;
             }
 
         }

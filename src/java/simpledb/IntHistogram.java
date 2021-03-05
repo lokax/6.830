@@ -97,16 +97,19 @@ public class IntHistogram {
 
         int pos = (v - min) / this.width;
         int b_left = min + pos * this.width; // pos所在的最左边界
+        double b_f = 1.0 * boxs[pos] / nTuples; //
+        double b_p;
         double estimate = 0.0;
         if(op.equals(Predicate.Op.EQUALS)) {
             // equality -- algorithm
             estimate = 1.0 * boxs[pos] / this.width;
             estimate = estimate / nTuples;
+            return estimate;
 
         } else {
             // inequality -- alg
-            double b_f = 1.0 * boxs[pos] / nTuples; //
-            double b_p;
+            // double b_f = 1.0 * boxs[pos] / nTuples; //
+            // double b_p;
             if(op.equals(Predicate.Op.GREATER_THAN) || op.equals(Predicate.Op.GREATER_THAN_OR_EQ)) {
                 for(int i = pos + 1; i < boxs.length; ++i) {
                     estimate += (1.0 * boxs[i]) / nTuples;
@@ -117,10 +120,21 @@ public class IntHistogram {
                     b_p = 1.0 * (this.width - (v - b_left))  / this.width;
                 }
                 // double inter = b_p * b_f;
-                estimate = estimate + b_p * b_f;
+                // estimate = estimate + b_p * b_f;
+            } else {
+                for(int i = 0; i < pos; ++i) {
+                    estimate += (1.0 * boxs[i]) / nTuples;
+                }
+                if(op.equals(Predicate.Op.LESS_THAN)) {
+                    b_p = 1.0 * (v - b_left) / this.width;
+                } else {
+                    b_p = 1.0 * (v - b_left + 1) / this.width;
+                }
+                // estimate = estimate + b_p * b_f;
             }
 
         }
+        estimate = estimate + b_p * b_f;
         return estimate;
     }
     

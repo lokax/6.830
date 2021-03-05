@@ -9,7 +9,7 @@ public class IntHistogram {
     private int max;
     private int width;
     private int[] boxs;
-    private int tupleSize;
+    private int nTuples;
     /**
      * Create a new IntHistogram.
      * 
@@ -33,7 +33,7 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         this.width = (max - min + 1) / buckets; // 100 - 1 + 1 / 10 = 10
-        this.tupleSize = 0;
+        this.nTuples = 0;
         if((max - min + 1) % buckets != 0) {
             buckets += 1;
         }
@@ -48,7 +48,7 @@ public class IntHistogram {
     	// some code goes here
         int index = (v - min) / this.width;
         boxs[index]++; // tuple size for range.
-        tupleSize++;
+        nTuples++;
     }
 
     /**
@@ -64,6 +64,19 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
 
     	// some code goes here
+        int pos = (v - min) / this.width;
+        if(op.equals(Predicate.Op.EQUALS)) {
+            // equality -- algorithm
+            double estimate = 1.0 * boxs[pos] / this.width;
+            estimate = estimate / nTuples;
+
+        } else {
+            // inequality -- alg
+            double b_f = 1.0 * boxs[pos] / nTuples;
+            double part = (pos * this.width + 1) - v / this.width;
+            double estimate = b_f * part;
+            return estimate;
+        }
         return -1.0;
     }
     

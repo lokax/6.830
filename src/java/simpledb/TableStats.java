@@ -68,6 +68,7 @@ public class TableStats {
     private Object[] hits;
     private int ioCostPerPage;
     private int numPage;
+    private int numTuple;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -89,6 +90,7 @@ public class TableStats {
         // in a single scan of the table.
         // some code goes here
         this.ioCostPerPage = ioCostPerPage;
+        this.numTuple = 0;
 
         DbFile dfile = Database.getCatalog().getDatabaseFile(tableid));
         if(dfile instanceof HeapFile) {
@@ -113,6 +115,7 @@ public class TableStats {
         try{
             scan.open();
             while(scan.hasNext()) {
+                this.numTuple += 1;
                 t = scan.next();
                 for(int i = 0; i < numFileds; i++) {
                     Field field = t.getField(i);

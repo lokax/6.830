@@ -119,7 +119,7 @@ public class IntHistogram {
                     estimate += (1.0 * boxs[i]) / nTuples;
                 }
                 if(op.equals(Predicate.Op.GREATER_THAN)){
-                    b_p = 1.0 * (this.width - (v - b_left) + 1)  / this.width;
+                    b_p = 1.0 * (this.width - (v - b_left + 1))  / this.width;
                 } else {
                     b_p = 1.0 * (this.width - (v - b_left))  / this.width;
                 }

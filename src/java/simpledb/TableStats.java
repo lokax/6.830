@@ -93,7 +93,7 @@ public class TableStats {
         this.ioCostPerPage = ioCostPerPage;
         this.numTuple = 0;
 
-        DbFile dfile = Database.getCatalog().getDatabaseFile(tableid));
+        DbFile dfile = Database.getCatalog().getDatabaseFile(tableid);
         if(dfile instanceof HeapFile) {
             this.numPage = ((HeapFile) dfile).numPages();
         } else {

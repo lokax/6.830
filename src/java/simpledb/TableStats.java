@@ -69,6 +69,7 @@ public class TableStats {
     private int ioCostPerPage;
     private int numPage;
     private int numTuple;
+    private TupleDesc td;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -101,7 +102,7 @@ public class TableStats {
         }
         TransactionId tid = new TransactionId();
         SeqScan scan = new SeqScan(tid, tableid);
-        TupleDesc td = scan.getTupleDesc();
+        this.td = scan.getTupleDesc();
         int numFileds = td.numFields();
         int minVals[] = new int[numFileds];
         int maxVals[] = new int[numFileds];
@@ -196,7 +197,7 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         // some code goes here
-        return 0;
+        return (int) (numTuple * selectivityFactor);
     }
 
     /**
@@ -229,7 +230,17 @@ public class TableStats {
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
         // some code goes here
-        return 1.0;
+        if(this.td.getFieldType(field) == Type.INT_TYPE) {
+            assert (constant.getType() == Type.INT_TYPE);
+            int v = ((IntField) constant).getValue();
+            return ((IntHistogram)hits[field]).estimateSelectivity(op, v);
+        } else {
+            assert(this.td.getFieldType(field) == Type.STRING_TYPE);
+            assert (constant.getType() == Type.STRING_TYPE);
+            String v = ((StringField) constant).getValue();
+            return ((StringHistogram)hits[field]).estimateSelectivity(op, v);
+
+        }
     }
 
     /**

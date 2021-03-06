@@ -66,6 +66,7 @@ public class TableStats {
      */
     static final int NUM_HIST_BINS = 100;
     private Object[] hits;
+    private int ioCostPerPage;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -86,6 +87,7 @@ public class TableStats {
         // necessarily have to (for example) do everything
         // in a single scan of the table.
         // some code goes here
+        this.ioCostPerPage = ioCostPerPage;
         TransactionId tid = new TransactionId();
         SeqScan scan = new SeqScan(tid, tableid);
         TupleDesc td = scan.getTupleDesc();
@@ -151,7 +153,7 @@ public class TableStats {
         } finally {
             scan.close();
         }
-        
+
     }
 
     /**

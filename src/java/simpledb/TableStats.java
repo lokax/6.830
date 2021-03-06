@@ -123,13 +123,13 @@ public class TableStats {
 
         for(int i = 0; i < numFileds; i++) {
             if(td.getFieldType(i) == Type.INT_TYPE) {
-                //chits[i] = new IntHistogram(maxVals[i] - minVals[i] + 1, minVals[i], maxVals[i]);
+                hits[i] = new IntHistogram(NUM_HIST_BINS, minVals[i], maxVals[i]);
             } else {
-                // hits[i] = new StringHistogram();
+                hits[i] = new StringHistogram(NUM_HIST_BINS);
             }
 
         }
-
+       
 
 
 

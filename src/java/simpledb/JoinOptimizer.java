@@ -111,7 +111,7 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+            return cost1 + card1 * cost2 + card1 * card2;
         }
     }
 
@@ -157,6 +157,29 @@ public class JoinOptimizer {
             Map<String, Integer> tableAliasToId) {
         int card = 1;
         // some code goes here
+        if(joinOp.equals(Predicate.Op.EQUALS)) {
+            if(t1pkey) {
+                card = card1;
+            } else if(t2pkey) {
+                card = card2;
+            } else {
+                card = Math.max(card1, card2);
+            }
+        } else if(joinOp.equals(Predicate.Op.NOT_EQUALS)) {
+            if(t1pkey) {
+                card = card1 * card2 - card1;
+            } else if(t2pkey) {
+                card = card1 * card2 - card2;
+            } else {
+                card = card1 * card2 - Math.max(card1, card2);
+            }
+        } else {
+            card = card1 * card2 / 3;
+        }
+
+
+
+
         return card <= 0 ? 1 : card;
     }
 
@@ -287,7 +310,8 @@ public class JoinOptimizer {
         int t1card, t2card;
         boolean leftPkey, rightPkey;
 
-        if (news.isEmpty()) { // base case -- both are base relations
+
+        if (news.isEmpty()) { // base case -- both are base relations // {1} {2} {3] - 掉
             prevBest = new Vector<LogicalJoinNode>();
             t1cost = stats.get(table1Name).estimateScanCost();
             t1card = stats.get(table1Name).estimateTableCardinality(

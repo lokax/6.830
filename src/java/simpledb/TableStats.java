@@ -67,6 +67,7 @@ public class TableStats {
     static final int NUM_HIST_BINS = 100;
     private Object[] hits;
     private int ioCostPerPage;
+    private int numPage;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -88,6 +89,14 @@ public class TableStats {
         // in a single scan of the table.
         // some code goes here
         this.ioCostPerPage = ioCostPerPage;
+
+        DbFile dfile = Database.getCatalog().getDatabaseFile(tableid));
+        if(dfile instanceof HeapFile) {
+            this.numPage = ((HeapFile) dfile).numPages();
+        } else {
+            assert (dfile instanceof BTreeFile);
+            this.numPage = ((BTreeFile) dfile).numPages();
+        }
         TransactionId tid = new TransactionId();
         SeqScan scan = new SeqScan(tid, tableid);
         TupleDesc td = scan.getTupleDesc();

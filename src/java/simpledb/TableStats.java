@@ -65,6 +65,7 @@ public class TableStats {
      * histograms.
      */
     static final int NUM_HIST_BINS = 100;
+    private Object[] hits;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -85,6 +86,53 @@ public class TableStats {
         // necessarily have to (for example) do everything
         // in a single scan of the table.
         // some code goes here
+        TransactionId tid = new TransactionId();
+        SeqScan scan = new SeqScan(tid, tableid);
+        TupleDesc td = scan.getTupleDesc();
+        int numFileds = td.numFields();
+        int minVals[] = new int[numFileds];
+        int maxVals[] = new int[numFileds];
+        Tuple t = null;
+
+        for(int i = 0; i < numFileds; i++) {
+            minVals[i] = Integer.MAX_VALUE;
+            maxVals[i] = Integer.MIN_VALUE;
+        }
+
+        try{
+            scan.open();
+            while(scan.hasNext()) {
+                t = scan.next();
+                for(int i = 0; i < numFileds; i++) {
+                    Field field = t.getField(i);
+                    if(field.getType() == Type.INT_TYPE) {
+                        if(((IntField)field).getValue() < minVals[i]) {
+                            minVals[i] = ((IntField) field).getValue();
+                        }
+                        if(((IntField) field).getValue() > maxVals[i]) {
+                            maxVals[i] = ((IntField) field).getValue();
+                        }
+                    }
+                }
+            }
+        } catch (DbException e){
+            e.printStackTrace();
+        } catch (TransactionAbortedException e) {
+            e.printStackTrace();
+        }
+
+        for(int i = 0; i < numFileds; i++) {
+            if(td.getFieldType(i) == Type.INT_TYPE) {
+                //chits[i] = new IntHistogram(maxVals[i] - minVals[i] + 1, minVals[i], maxVals[i]);
+            } else {
+                // hits[i] = new StringHistogram();
+            }
+
+        }
+
+
+
+
     }
 
     /**

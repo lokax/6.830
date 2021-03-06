@@ -106,6 +106,7 @@ public class TableStats {
         int numFileds = td.numFields();
         int minVals[] = new int[numFileds];
         int maxVals[] = new int[numFileds];
+        this.hits = new Object[numFileds];
         Tuple t = null;
 
         for(int i = 0; i < numFileds; i++) {

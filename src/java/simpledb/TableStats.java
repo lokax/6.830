@@ -129,10 +129,29 @@ public class TableStats {
             }
 
         }
-       
+        try {
+            scan.rewind();
+            t = null;
+            while(scan.hasNext()) {
+                t = scan.next();
+                for(int i = 0; i < numFileds; i++) {
+                    Field field = t.getField(i);
+                    if(field.getType()  == Type.INT_TYPE) {
+                        ((IntHistogram) hits[i]).addValue(((IntField) field).getValue());
+                    } else {
+                        ((StringHistogram) hits[i]).addValue(((StringField) field).getValue());
+                    }
+                }
+            }
 
-
-
+        } catch (DbException e) {
+            e.printStackTrace();
+        } catch (TransactionAbortedException e) {
+            e.printStackTrace();
+        } finally {
+            scan.close();
+        }
+        
     }
 
     /**

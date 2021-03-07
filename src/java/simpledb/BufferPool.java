@@ -115,7 +115,9 @@ class ConcurrencyMgr {
                     l.upgrade(tid);
                 } else {
                     try{
-                        while(l.hasSlock())
+                        while(l.hasSlock()) {
+                            wait(1000);
+                        }
                     } catch(InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -203,7 +205,7 @@ public class BufferPool {
     public static final int DEFAULT_PAGES = 50;
 
     // private Page[] pageBuffer;
-    private HashMap<PageId, Page> pageBuffer;
+    private ConcurrentHashMap<PageId, Page> pageBuffer;
     private ArrayList<PageId> pageIdList;
     private ConcurrencyMgr lockMgr;
     private int currentSize;
@@ -216,7 +218,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         // some code goes here
         // pageBuffer = new Page[numPages];
-        pageBuffer = new HashMap<>();
+        pageBuffer = new ConcurrentHashMap<>();
         pageIdList = new ArrayList<>();
         lockMgr = new ConcurrencyMgr();
         currentSize = 0;
@@ -265,6 +267,7 @@ public class BufferPool {
           p = dbfile.readPage(pid);
           pageBuffer.put(pid, p);
           pageIdList.add(pid);
+
           currentSize++;
         }
         return p;

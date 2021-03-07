@@ -7,6 +7,52 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.locks.Lock;
+
+
+class ConcurrencyMgr {
+    enum LockType {
+        slock,
+        xlock,
+    }
+
+    private class LockObj{
+        private LockType type;
+        private PageId pageId;
+        private ArrayList<TransactionId> lockList;
+
+        public LockObj(LockType type, PageId pageId) {
+            this.type = type;
+            this.pageId = pageId;
+            lockList = new ArrayList<>();
+        }
+
+        public synchronized void addLockList(TransactionId tid) {
+            // lockList
+            lockList.add(tid);
+        }
+
+    }
+    private ConcurrentHashMap<PageId, LockObj> lockTable;
+
+    public ConcurrencyMgr() {
+        lockTable = new ConcurrentHashMap<>();
+    }
+
+    public synchronized void requestSLock(TransactionId tid, PageId pid) {
+
+        LockObj l = lockTable.getOrDefault(pid, null);
+        if(l == null) {
+            l = new LockObj(LockType.slock, pid);
+            l.addLockList(tid);
+            lockTable.put(pid, l);
+        } else {
+            l.addLockList(tid);
+        }
+    }
+    
+}
 
 /**
  * BufferPool manages the reading and writing of pages into memory from

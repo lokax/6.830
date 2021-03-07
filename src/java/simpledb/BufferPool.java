@@ -32,6 +32,24 @@ class ConcurrencyMgr {
             return type;
         }
 
+        public boolean isSLock() {
+            return type == LockType.slock;
+        }
+
+        public boolean hasSlock() {
+            if(type == LockType.slock) {
+                return true;
+            } else {
+                if(lockList.size() == 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+                    //return false;
+            }
+        }
+
+
         public synchronized void addLockList(TransactionId tid) {
             // lockList
             lockList.add(tid);
@@ -48,11 +66,27 @@ class ConcurrencyMgr {
 
         LockObj l = lockTable.getOrDefault(pid, null);
         if(l == null) {
+            // 在该页上不存在lock，所以可以随便锁。
             l = new LockObj(LockType.slock, pid);
             l.addLockList(tid);
             lockTable.put(pid, l);
         } else {
-            l.addLockList(tid);
+            // 由于已经存在锁对象，需要进一步判断是否为Slock对象。
+            if(l.isSLock()) {
+                l.addLockList(tid);
+            } else {
+                try {
+                    while( !l.hasSlock())
+                        wait(1000);
+                    assert (l.hasSlock());
+                    l.addLockList(tid);
+
+                } catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
         }
     }
 

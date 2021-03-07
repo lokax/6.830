@@ -125,7 +125,17 @@ class ConcurrencyMgr {
 
         }
     }
+    public synchronized void requestLock(LockType type, TransactionId tid, PageId pid) {
+        LockObj l = lockTable.getOrDefault(pid, null);
+        while(true) {
+            if(l == null) {
+                l = new LockObj(type, pid);
+                l.addLockList(tid);
+                lockTable.put(pid, l);
+            }
+        }
 
+    }
 
 }
 

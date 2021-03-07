@@ -344,14 +344,21 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         nodes.add(new LogicalJoinNode("emp", "dept", "c1", "c0",
                 Predicate.Op.EQUALS));
         nodes.add(new LogicalJoinNode("emp", "hobbies", "c2", "c0",
-                Predicate.Op.EQUALS));
+                 Predicate.Op.EQUALS));
         Parser p = new Parser();
+
         j = new JoinOptimizer(
                 p.generateLogicalPlan(
                         tid,
                         "SELECT * FROM emp,dept,hobbies,hobby WHERE emp.c1 = dept.c0 AND hobbies.c0 = emp.c2 AND hobbies.c1 = hobby.c0 AND e.c3 < 1000;"),
                 nodes);
-
+        /**
+        j = new JoinOptimizer(
+                p.generateLogicalPlan(
+                        tid,
+                        "SELECT * FROM emp,dept,hobbies,hobby WHERE emp.c1 = dept.c0 AND hobbies.c1 = hobby.c0 AND e.c3 < 1000;"),
+                nodes);
+         */
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
         result = j.orderJoins(stats, filterSelectivities, false);

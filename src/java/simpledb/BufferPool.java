@@ -49,10 +49,25 @@ class ConcurrencyMgr {
             }
         }
 
+        public TransactionId getFirst() {
+            return lockList.get(0);
+        }
 
+        public int size() {
+            return lockList.size();
+        }
         public synchronized void addLockList(TransactionId tid) {
             // lockList
             lockList.add(tid);
+        }
+        public synchronized boolean upgrade(TransactionId tid) {
+            if(size() == 1 && tid.equals(getFirst())) {
+                type = LockType.xlock;
+                return true;
+            }
+            assert (false);
+            System.out.println("不应该到这里");
+            return false;
         }
 
     }
@@ -84,14 +99,31 @@ class ConcurrencyMgr {
                 } catch(InterruptedException e) {
                     e.printStackTrace();
                 }
-
             }
-
         }
     }
 
     public synchronized void requestXlock(TransactionId tid, PageId pid) {
+        LockObj l = lockTable.getOrDefault(pid, null);
+        if(l == null) {
+            l = new LockObj(LockType.xlock, pid);
+            l.addLockList(tid);
+            lockTable.put(pid, l);
+        } else {
+            if(l.size() == 1) {
+                if(l.getFirst().equals(tid)) {
+                    l.upgrade(tid);
+                } else {
+                    try{
+                        while(l.hasSlock())
+                    } catch(InterruptedException e) {
+                        e.printStackTrace();
+                    }
 
+                }
+            }
+
+        }
     }
 
 

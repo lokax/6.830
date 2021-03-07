@@ -257,6 +257,15 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
+        ConcurrencyMgr.LockType lockType;
+        if(perm == Permissions.READ_ONLY) {
+            lockType = ConcurrencyMgr.LockType.slock;
+        } else {
+            lockType = ConcurrencyMgr.LockType.xlock;
+        }
+        lockMgr.requestLock(lockType, tid, pid);
+
+
         DbFile dbfile = Database.getCatalog().getDatabaseFile(pid.getTableId());
         Page p = pageBuffer.getOrDefault(pid, null);
         if(p == null) {

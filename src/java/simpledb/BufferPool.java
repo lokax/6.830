@@ -28,6 +28,10 @@ class ConcurrencyMgr {
             lockList = new ArrayList<>();
         }
 
+        public LockType getType() {
+            return type;
+        }
+
         public synchronized void addLockList(TransactionId tid) {
             // lockList
             lockList.add(tid);
@@ -51,7 +55,12 @@ class ConcurrencyMgr {
             l.addLockList(tid);
         }
     }
-    
+
+    public synchronized void requestXlock(TransactionId tid, PageId pid) {
+
+    }
+
+
 }
 
 /**

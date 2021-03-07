@@ -139,7 +139,16 @@ class ConcurrencyMgr {
                     l.addLockList(tid);
                     return;
                 } else {
-
+                    if(l.size() == 1 && l.getClass().equals(tid)) {
+                        l.upgrade(tid);
+                        return;
+                    } else {
+                        try{
+                            wait(1000);
+                        } catch(InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
             }

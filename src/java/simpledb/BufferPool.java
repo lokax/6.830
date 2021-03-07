@@ -132,7 +132,20 @@ class ConcurrencyMgr {
                 l = new LockObj(type, pid);
                 l.addLockList(tid);
                 lockTable.put(pid, l);
+                return;
             }
+            if(l.getType() == LockType.slock) {
+                if(type == LockType.slock) {
+                    l.addLockList(tid);
+                    return;
+                } else {
+
+                }
+
+            }
+
+
+
         }
 
     }

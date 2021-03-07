@@ -136,10 +136,13 @@ class ConcurrencyMgr {
             }
             if(l.getType() == LockType.slock) {
                 if(type == LockType.slock) {
+                    // 请求slock
                     l.addLockList(tid);
                     return;
                 } else {
+                    // 请求xlock，但obj为slock时
                     if(l.size() == 1 && l.getClass().equals(tid)) {
+                        // 如果只有一个对象，且相等可以uppgrade
                         l.upgrade(tid);
                         return;
                     } else {

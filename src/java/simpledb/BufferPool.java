@@ -205,6 +205,7 @@ public class BufferPool {
     // private Page[] pageBuffer;
     private HashMap<PageId, Page> pageBuffer;
     private ArrayList<PageId> pageIdList;
+    private ConcurrencyMgr lockMgr;
     private int currentSize;
     private int maxSize;
     /**
@@ -217,6 +218,7 @@ public class BufferPool {
         // pageBuffer = new Page[numPages];
         pageBuffer = new HashMap<>();
         pageIdList = new ArrayList<>();
+        lockMgr = new ConcurrencyMgr();
         currentSize = 0;
         maxSize = numPages;
     }

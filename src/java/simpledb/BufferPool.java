@@ -153,11 +153,27 @@ class ConcurrencyMgr {
                         }
                     }
                 }
+            } else {
+                if(type == LockType.slock) {
+                    try{
+                        wait(1000);
+                    }catch(InterruptedException e) {
+                        e.printStackTrace();
+                    }
 
+                } else {
+                    if(l.size() == 1 && l.getFirst().equals(tid)) {
+                        // already locked
+                        return;
+                    } else {
+                        try {
+                            wait(1000);
+                        } catch(InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
-
-
-
         }
 
     }

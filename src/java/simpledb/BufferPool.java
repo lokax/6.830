@@ -75,10 +75,15 @@ class ConcurrencyMgr {
         }
 
     }
+
+
+
     private ConcurrentHashMap<PageId, LockObj> lockTable;
+    private ConcurrentHashMap<TransactionId, ArrayList<PageId>> holdsPage;
 
     public ConcurrencyMgr() {
         lockTable = new ConcurrentHashMap<>();
+        holdsPage = new ConcurrentHashMap<>();
     }
 
 
@@ -92,6 +97,21 @@ class ConcurrencyMgr {
         }
         return false;
     }
+
+    private void addHolder(TransactionId tid, PageId pid) {
+        ArrayList<PageId> arr = holdsPage.getOrDefault(tid, null);
+        if(arr == null) {
+            arr = new ArrayList<>();
+            arr.add(pid);
+            return;
+        }
+        if(arr.contains(pid)) {
+            return;
+        }
+        arr.add(pid);
+
+    }
+    
     public synchronized void requestLock(LockType type, TransactionId tid, PageId pid) {
         LockObj l = lockTable.getOrDefault(pid, null);
         while(true) {
@@ -99,6 +119,7 @@ class ConcurrencyMgr {
                 l = new LockObj(type, pid);
                 l.addLockList(tid);
                 lockTable.put(pid, l);
+
                 return;
             }
             if(l.getType() == LockType.slock) {
@@ -188,6 +209,7 @@ public class BufferPool {
 
     // private Page[] pageBuffer;
     private ConcurrentHashMap<PageId, Page> pageBuffer;
+    // private ConcurrentHashMap<TransactionId, Page> tPage;
     private ArrayList<PageId> pageIdList;
     private ConcurrencyMgr lockMgr;
     private int currentSize;
@@ -288,6 +310,7 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -309,6 +332,9 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        if(commit) {
+
+        }
     }
 
     /**
@@ -340,9 +366,10 @@ public class BufferPool {
                 if(currentSize == maxSize) {
                     evictPage();
                 }
+                pageBuffer.remove(pid);
                 pageBuffer.put(pid, p);
-                pageIdList.add(pid);
-                currentSize++;
+                // pageIdList.add(pid);
+                // currentSize++;
             }
 
             // TODO 解决bug
@@ -377,9 +404,13 @@ public class BufferPool {
                 if(currentSize == maxSize) {
                     evictPage();
                 }
+                // pageBuffer.put(pid, p);
+                // pageIdList.add(pid);
+                pageBuffer.remove(pid);
                 pageBuffer.put(pid, p);
-                pageIdList.add(pid);
-                currentSize++;
+                // pageIdList.remove(pid);
+                // pageIdList.add(pid, p);
+                // currentSize++;
             }
             // TODO 解决bug
         }
@@ -435,6 +466,9 @@ public class BufferPool {
         if(p == null) {
             return;
         }
+        if(p.isDirty() == null) {
+            return;
+        }
         DbFile df = Database.getCatalog().getDatabaseFile(p.getId().getTableId());
         df.writePage(p);
         pageBuffer.remove(pid);
@@ -448,6 +482,7 @@ public class BufferPool {
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+
     }
 
     /**

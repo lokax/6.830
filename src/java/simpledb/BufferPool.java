@@ -147,7 +147,7 @@ class ConcurrencyMgr {
                     return;
                 } else {
                     // 请求xlock，但obj为slock时
-                    if(l.size() == 1 && l.getClass().equals(tid)) {
+                    if(l.size() == 1 && l.getFirst().equals(tid)) {
                         // 如果只有一个对象，且相等可以uppgrade
                         l.upgrade(tid);
                         return;

@@ -342,10 +342,18 @@ public class BufferPool {
         if(commit) {
             flushPages(tid);
         } else {
-
+            
         }
         ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
-        while()
+        if(pidArr == null) {
+            return;
+        }
+        Iterator<PageId> itr = pidArr.iterator();
+        while(itr.hasNext()) {
+            PageId pid = itr.next();
+            discardPage(pid);
+            releasePage(tid, pid);
+        }
     }
 
     /**

@@ -31,6 +31,10 @@ class ConcurrencyMgr {
         public LockType getType() {
             return type;
         }
+        public LockType setType(LockType type) {
+            this.type = type;
+        }
+
 
         public boolean isSLock() {
             return type == LockType.slock;
@@ -157,6 +161,9 @@ class ConcurrencyMgr {
                 }
             } else {
                 if(type == LockType.slock) {
+                    if(l.size() == 1 && l.getFirst().equals(tid)) {
+
+                    }
                     try{
                         wait(1000);
                     }catch(InterruptedException e) {
@@ -179,6 +186,19 @@ class ConcurrencyMgr {
         }
 
     }
+
+    public synchronized void releaseLock(TransactionId tid, PageId pid) {
+        LockObj l = lockTable.getOrDefault(pid, null);
+        if(l == null || l.size() == 0) {
+            return;
+        }
+        l.lockList.remove(tid);
+        if(l.size() == 0) {
+            lockTable.remove(pid, l);
+        }
+        return;
+    }
+
 
 }
 
@@ -294,6 +314,7 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
+        lockMgr.releaseLock(tid, pid);
     }
 
     /**

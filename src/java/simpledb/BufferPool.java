@@ -551,18 +551,16 @@ public class BufferPool {
 
         }*/
 
-
-        for(int i = 0; i < pageIdList.size(); i++) {
-            PageId pid = pageIdList.get(i);
-            Page p = pageBuffer.getOrDefault(pid, null);
+        for(Map.Entry<PageId,Page> entry : pageBuffer.entrySet()) {
+            PageId pid = entry.getKey();
+            Page p = entry.getValue();
             if(p.isDirty() == null) {
-                pageIdList.remove(i);
                 pageBuffer.remove(pid);
                 currentSize--;
+                System.out.println("evict");
             }
-            System.out.println("牺牲");
-
         }
+
         throw new DbException("no clean page!!!");
     }
 

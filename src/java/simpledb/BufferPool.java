@@ -342,24 +342,32 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
         if(commit) {
             flushPages(tid);
+            if(pidArr == null) {
+                return;
+            }
+            Iterator<PageId> itr2 = pidArr.iterator();
+            while(itr2.hasNext()) {
+                PageId pid = itr2.next();
+                discardPage(pid);
+                releasePage(tid, pid);
+            }
         } else {
-            ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
-            Page p = pageBuffer.getOrDefault(pidArr.get(0), null);
-            p.getBeforeImage();
+            if(pidArr == null) {
+                return;
+            }
+            Iterator<PageId> itr1 = pidArr.iterator();
+            while(itr1.hasNext()) {
+                PageId pid = itr1.next();
+                Page p = pageBuffer.getOrDefault(pid, null);
+                Page oldPage = p.getBeforeImage();
+                pageBuffer.remove(p.getId());
+                pageBuffer.put(oldPage.getId(), oldPage);
+                releasePage(tid, pid);
+            }
 
-
-        }
-        ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
-        if(pidArr == null) {
-            return;
-        }
-        Iterator<PageId> itr = pidArr.iterator();
-        while(itr.hasNext()) {
-            PageId pid = itr.next();
-            discardPage(pid);
-            releasePage(tid, pid);
         }
     }
 

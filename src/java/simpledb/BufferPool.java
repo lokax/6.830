@@ -5,6 +5,7 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
@@ -488,7 +489,12 @@ public class BufferPool {
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
-
+        ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
+        Iterator<PageId> itr = pidArr.iterator();
+        while(itr.hasNext()) {
+            PageId pid = itr.next();
+            flushPage(pid);
+        }
     }
 
     /**

@@ -138,6 +138,7 @@ public class HeapFile implements DbFile {
             page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
             int numEmptySlots = page.getNumEmptySlots();
             if(numEmptySlots == 0) {
+                Database.getBufferPool().releasePage(tid, pid);
                 continue;
             }
             page.insertTuple(t);

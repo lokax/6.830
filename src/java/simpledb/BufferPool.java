@@ -31,7 +31,7 @@ class ConcurrencyMgr {
         public LockType getType() {
             return type;
         }
-        public LockType setType(LockType type) {
+        public void setType(LockType type) {
             this.type = type;
         }
 
@@ -162,7 +162,8 @@ class ConcurrencyMgr {
             } else {
                 if(type == LockType.slock) {
                     if(l.size() == 1 && l.getFirst().equals(tid)) {
-
+                        l.setType(LockType.slock);
+                        return;
                     }
                     try{
                         wait(1000);

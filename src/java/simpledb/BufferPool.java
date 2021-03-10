@@ -340,8 +340,12 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1|lab2
         if(commit) {
+            flushPages(tid);
+        } else {
 
         }
+        ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
+        while()
     }
 
     /**
@@ -494,6 +498,9 @@ public class BufferPool {
         // not necessary for lab1|lab2
         ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
         Iterator<PageId> itr = pidArr.iterator();
+        if(itr == null) {
+            return;
+        }
         while(itr.hasNext()) {
             PageId pid = itr.next();
             flushPage(pid);

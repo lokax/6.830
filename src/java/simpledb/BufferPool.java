@@ -218,7 +218,7 @@ public class BufferPool {
     // private Page[] pageBuffer;
     private ConcurrentHashMap<PageId, Page> pageBuffer;
     // private ConcurrentHashMap<TransactionId, Page> tPage;
-    private ArrayList<PageId> pageIdList;
+    // private ArrayList<PageId> pageIdList;
     private ConcurrencyMgr lockMgr;
     private int currentSize;
     private int maxSize;
@@ -231,7 +231,7 @@ public class BufferPool {
         // some code goes here
         // pageBuffer = new Page[numPages];
         pageBuffer = new ConcurrentHashMap<>();
-        pageIdList = new ArrayList<>();
+        // pageIdList = new ArrayList<>();
         lockMgr = new ConcurrencyMgr();
         currentSize = 0;
         maxSize = numPages;
@@ -290,7 +290,7 @@ public class BufferPool {
           p.setBeforeImage();
           //
           pageBuffer.put(pid, p);
-          pageIdList.add(pid);
+         //  pageIdList.add(pid);
 
           currentSize++;
         }
@@ -460,10 +460,15 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
+        /**
         int len = pageIdList.size();
         for(int i = len; i > 0; --i) {
             PageId pid = pageIdList.get(0);
             // Page p = pageBuffer.getOrDefault(pid, null);
+            flushPage(pid);
+        }*/
+        for(Map.Entry<PageId, Page> entry : pageBuffer.entrySet()) {
+            PageId pid = entry.getKey();
             flushPage(pid);
         }
         /**
@@ -486,7 +491,7 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
         pageBuffer.remove(pid);
-        pageIdList.remove(pid);
+        // pageIdList.remove(pid);
         currentSize--;
     }
 
@@ -555,9 +560,11 @@ public class BufferPool {
             PageId pid = entry.getKey();
             Page p = entry.getValue();
             if(p.isDirty() == null) {
-                pageBuffer.remove(pid);
-                currentSize--;
+                // pageBuffer.remove(pid);
+                // currentSize--;
+                discardPage(pid);
                 System.out.println("evict");
+                return;
             }
         }
 

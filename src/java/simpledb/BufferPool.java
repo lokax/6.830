@@ -555,14 +555,13 @@ public class BufferPool {
         for(int i = 0; i < pageIdList.size(); i++) {
             PageId pid = pageIdList.get(i);
             Page p = pageBuffer.getOrDefault(pid, null);
-            if(p.isDirty() != null) {
-                continue;
+            if(p.isDirty() == null) {
+                pageIdList.remove(i);
+                pageBuffer.remove(pid);
+                currentSize--;
             }
             System.out.println("牺牲");
-            pageIdList.remove(i);
-            pageBuffer.remove(pid);
-            currentSize--;
-            return;
+
         }
         throw new DbException("no clean page!!!");
     }

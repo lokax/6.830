@@ -111,7 +111,12 @@ class ConcurrencyMgr {
         arr.add(pid);
 
     }
-    
+
+    private ArrayList<PageId> getHolder(TransactionId tid) {
+        ArrayList<PageId> arr = holdsPage.getOrDefault(tid, null);
+        return arr;
+    }
+
     public synchronized void requestLock(LockType type, TransactionId tid, PageId pid) {
         LockObj l = lockTable.getOrDefault(pid, null);
         while(true) {
@@ -119,13 +124,14 @@ class ConcurrencyMgr {
                 l = new LockObj(type, pid);
                 l.addLockList(tid);
                 lockTable.put(pid, l);
-
+                addHolder(tid, pid);
                 return;
             }
             if(l.getType() == LockType.slock) {
                 if(type == LockType.slock) {
                     // 请求slock
                     l.addLockList(tid);
+                    addHolder(tid, pid);
                     return;
                 } else {
                     // 请求xlock，但obj为slock时

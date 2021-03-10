@@ -285,6 +285,9 @@ public class BufferPool {
               evictPage();
           }
           p = dbfile.readPage(pid);
+          // set old data
+          p.setBeforeImage();
+          //
           pageBuffer.put(pid, p);
           pageIdList.add(pid);
 
@@ -342,7 +345,11 @@ public class BufferPool {
         if(commit) {
             flushPages(tid);
         } else {
-            
+            ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
+            Page p = pageBuffer.getOrDefault(pidArr.get(0), null);
+            p.getBeforeImage();
+
+
         }
         ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
         if(pidArr == null) {

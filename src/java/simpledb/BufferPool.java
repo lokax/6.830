@@ -81,7 +81,17 @@ class ConcurrencyMgr {
         lockTable = new ConcurrentHashMap<>();
     }
 
-    
+
+    public boolean isHoldsLock(TransactionId tid, PageId pid) {
+        LockObj l = lockTable.getOrDefault(pid, null);
+        if(l == null || l.size() == 0) {
+            return false;
+        }
+        if(l.lockList.contains(tid)) {
+            return true;
+        }
+        return false;
+    }
     public synchronized void requestLock(LockType type, TransactionId tid, PageId pid) {
         LockObj l = lockTable.getOrDefault(pid, null);
         while(true) {
@@ -283,7 +293,8 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for lab1|lab2
-        return false;
+
+        return lockMgr.isHoldsLock(tid, p);
     }
 
     /**

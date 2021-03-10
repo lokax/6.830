@@ -104,6 +104,7 @@ class ConcurrencyMgr {
         if(arr == null) {
             arr = new ArrayList<>();
             arr.add(pid);
+            holdsPage.put(tid, arr);
             return;
         }
         if(arr.contains(pid)) {
@@ -362,6 +363,7 @@ public class BufferPool {
             while(itr1.hasNext()) {
                 PageId pid = itr1.next();
                 Page p = pageBuffer.getOrDefault(pid, null);
+
                 Page oldPage = p.getBeforeImage();
                 pageBuffer.remove(p.getId());
                 pageBuffer.put(oldPage.getId(), oldPage);
@@ -520,6 +522,9 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1|lab2
         ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
+        if(pidArr == null) {
+            return;
+        }
         Iterator<PageId> itr = pidArr.iterator();
         if(itr == null) {
             return;
@@ -553,6 +558,7 @@ public class BufferPool {
             if(p.isDirty() != null) {
                 continue;
             }
+            System.out.println("牺牲");
             pageIdList.remove(i);
             pageBuffer.remove(pid);
             currentSize--;

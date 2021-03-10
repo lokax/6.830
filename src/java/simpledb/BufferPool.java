@@ -81,56 +81,7 @@ class ConcurrencyMgr {
         lockTable = new ConcurrentHashMap<>();
     }
 
-    public synchronized void requestSLock(TransactionId tid, PageId pid) {
-
-        LockObj l = lockTable.getOrDefault(pid, null);
-        if(l == null) {
-            // 在该页上不存在lock，所以可以随便锁。
-            l = new LockObj(LockType.slock, pid);
-            l.addLockList(tid);
-            lockTable.put(pid, l);
-        } else {
-            // 由于已经存在锁对象，需要进一步判断是否为Slock对象。
-            if(l.isSLock()) {
-                l.addLockList(tid);
-            } else {
-                try {
-                    while( !l.hasSlock())
-                        wait(1000);
-                    assert (l.hasSlock());
-                    l.addLockList(tid);
-
-                } catch(InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    public synchronized void requestXlock(TransactionId tid, PageId pid) {
-        LockObj l = lockTable.getOrDefault(pid, null);
-        if(l == null) {
-            l = new LockObj(LockType.xlock, pid);
-            l.addLockList(tid);
-            lockTable.put(pid, l);
-        } else {
-            if(l.size() == 1) {
-                if(l.getFirst().equals(tid)) {
-                    l.upgrade(tid);
-                } else {
-                    try{
-                        while(l.hasSlock()) {
-                            wait(1000);
-                        }
-                    } catch(InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-
-        }
-    }
+    
     public synchronized void requestLock(LockType type, TransactionId tid, PageId pid) {
         LockObj l = lockTable.getOrDefault(pid, null);
         while(true) {

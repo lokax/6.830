@@ -478,10 +478,13 @@ public class BufferPool {
         }
         DbFile df = Database.getCatalog().getDatabaseFile(p.getId().getTableId());
         df.writePage(p);
-        pageBuffer.remove(pid);
-        pageIdList.remove(pid);
-        currentSize--;
+        p.markDirty(false, null);
 
+
+
+       //  pageBuffer.remove(pid);
+       //  pageIdList.remove(pid);
+       //  currentSize--;
     }
 
     /** Write all pages of the specified transaction to disk.

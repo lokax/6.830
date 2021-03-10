@@ -112,7 +112,7 @@ class ConcurrencyMgr {
 
     }
 
-    private ArrayList<PageId> getHolder(TransactionId tid) {
+    public ArrayList<PageId> getHolder(TransactionId tid) {
         ArrayList<PageId> arr = holdsPage.getOrDefault(tid, null);
         return arr;
     }

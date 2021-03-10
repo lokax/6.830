@@ -349,27 +349,34 @@ public class BufferPool {
             if(pidArr == null) {
                 return;
             }
+            /** bug
             Iterator<PageId> itr2 = pidArr.iterator();
             while(itr2.hasNext()) {
                 PageId pid = itr2.next();
                 discardPage(pid);
+                releasePage(tid, pid);
+            }*/
+            for(PageId pid : pidArr) {
+                Page p = pageBuffer.getOrDefault(pid, null);
+                if(p != null) {
+                    discardPage(pid);
+                }
                 releasePage(tid, pid);
             }
         } else {
             if(pidArr == null) {
                 return;
             }
-            Iterator<PageId> itr1 = pidArr.iterator();
-            while(itr1.hasNext()) {
-                PageId pid = itr1.next();
-                Page p = pageBuffer.getOrDefault(pid, null);
 
-                Page oldPage = p.getBeforeImage();
-                pageBuffer.remove(p.getId());
-                pageBuffer.put(oldPage.getId(), oldPage);
+            for(PageId pid : pidArr) {
+                Page p = pageBuffer.getOrDefault(pid, null);
+                if(p != null) {
+                    Page oldPage = p.getBeforeImage();
+                    pageBuffer.remove(p.getId());
+                    pageBuffer.put(oldPage.getId(), oldPage);
+                }
                 releasePage(tid, pid);
             }
-
         }
     }
 

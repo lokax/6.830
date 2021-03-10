@@ -277,6 +277,7 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1|lab2
         lockMgr.releaseLock(tid, pid);
+
     }
 
     /**
@@ -462,13 +463,22 @@ public class BufferPool {
             pageBuffer.remove(key);
             currentSize--;
             break;
+
         }*/
-        if(!pageIdList.isEmpty()) {
-            PageId pid = pageIdList.get(0);
-            pageIdList.remove(0);
+
+
+        for(int i = 0; i < pageIdList.size(); i++) {
+            PageId pid = pageIdList.get(i);
+            Page p = pageBuffer.getOrDefault(pid, null);
+            if(p.isDirty() != null) {
+                continue;
+            }
+            pageIdList.remove(i);
             pageBuffer.remove(pid);
             currentSize--;
+            return;
         }
+        throw new DbException("no clean page!!!");
     }
 
 }

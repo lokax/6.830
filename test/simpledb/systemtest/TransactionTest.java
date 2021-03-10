@@ -90,9 +90,10 @@ public class TransactionTest extends SimpleDbTestBase {
                     Transaction tr = new Transaction();
                     try {
                         tr.start();
+                        System.out.println("before");
                         SeqScan ss1 = new SeqScan(tr.getId(), tableId, "");
                         SeqScan ss2 = new SeqScan(tr.getId(), tableId, "");
-
+                        System.out.println("after");
                         // read the value out of the table
                         Query q1 = new Query(ss1, tr.getId());
                         q1.start();
@@ -110,28 +111,31 @@ public class TransactionTest extends SimpleDbTestBase {
 
                         // race the other threads to finish the transaction: one will win
                         q1.close();
-
+                        System.out.println("111");
                         // delete old values (i.e., just one row) from table
                         Delete delOp = new Delete(tr.getId(), ss2);
 
                         Query q2 = new Query(delOp, tr.getId());
-
+                        System.out.println("666");;
                         q2.start();
+                        System.out.println("sw");
                         q2.next();
+                        System.out.println("ww");
                         q2.close();
-
+                        System.out.printf("ss\n");
+                        System.out.println("444");
                         // set up a Set with a tuple that is one higher than the old one.
                         HashSet<Tuple> hs = new HashSet<Tuple>();
                         hs.add(t);
                         TupleIterator ti = new TupleIterator(t.getTupleDesc(), hs);
-
+                        System.out.println("333");
                         // insert this new tuple into the table
                         Insert insOp = new Insert(tr.getId(), ti, tableId);
                         Query q3 = new Query(insOp, tr.getId());
                         q3.start();
                         q3.next();
                         q3.close();
-
+                        System.out.println("222");
                         tr.commit();
                         break;
                     } catch (TransactionAbortedException te) {

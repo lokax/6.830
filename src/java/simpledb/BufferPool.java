@@ -119,7 +119,23 @@ class ConcurrencyMgr {
         return arr;
     }
 
-    public synchronized void requestLock(LockType type, TransactionId tid, PageId pid) {
+    private synchronized void blockForLock() throws TransactionAbortedException{
+       long startTime = System.currentTimeMillis();
+       try {
+           wait(1000);
+           if(System.currentTimeMillis() - startTime > 1000) {
+               throw new TransactionAbortedException();
+           }
+
+
+       } catch (InterruptedException e) {
+           e.printStackTrace();
+       }
+
+    }
+
+    public synchronized void requestLock(LockType type, TransactionId tid, PageId pid)
+            throws TransactionAbortedException {
         LockObj l = lockTable.getOrDefault(pid, null);
         while(true) {
             if(l == null) {
@@ -132,6 +148,12 @@ class ConcurrencyMgr {
             if(l.getType() == LockType.slock) {
                 if(type == LockType.slock) {
                     // 请求slock
+                    ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
+                    // new code
+                    if(pArr != null && pArr.contains(pid)) {
+                        return;
+                    }
+                    // *********
                     l.addLockList(tid);
                     addHolder(tid, pid);
                     return;
@@ -142,11 +164,10 @@ class ConcurrencyMgr {
                         l.upgrade(tid);
                         return;
                     } else {
-                        try{
-                            wait(1000);
-                        } catch(InterruptedException e) {
-                            e.printStackTrace();
-                        }
+
+                            blockForLock();
+                            // wait(1000);
+
                     }
                 }
             } else {
@@ -155,22 +176,15 @@ class ConcurrencyMgr {
                         l.setType(LockType.slock);
                         return;
                     }
-                    try{
-                        wait(1000);
-                    }catch(InterruptedException e) {
-                        e.printStackTrace();
-                    }
+
+                     blockForLock();
 
                 } else {
                     if(l.size() == 1 && l.getFirst().equals(tid)) {
                         // already locked
                         return;
                     } else {
-                        try {
-                            wait(1000);
-                        } catch(InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                        blockForLock();
                     }
                 }
             }

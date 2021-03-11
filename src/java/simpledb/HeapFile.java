@@ -105,7 +105,7 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public void writePage(Page page) throws IOException {
+    public synchronized void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for lab1
         int pgno = page.getId().getPageNumber();

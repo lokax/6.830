@@ -224,7 +224,7 @@ class ConcurrencyMgr {
             lockTable.remove(pid, l);
         }
          */
-
+        long tida = Thread.currentThread().getId();
         ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
         if(pArr != null && pArr.contains(pid)) {
             LockObj l = lockTable.getOrDefault(pid, null);
@@ -235,9 +235,11 @@ class ConcurrencyMgr {
                     holdsPage.remove(tid);
                 }
                 if(l.size() == 0) {
+                    System.out.println("after remove size == 0");
                     lockTable.remove(pid);
                 }
                 notifyAll();
+                System.out.println("thread id:"+ tida + "释放锁");
             }
         }
         // return;
@@ -397,14 +399,19 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        long tida = Thread.currentThread().getId();
+        System.out.println("提交threadid " + tida);
         ArrayList<PageId> pidArr = (ArrayList<PageId>) lockMgr.getHolder(tid);
         ArrayList<PageId> pidArr2 = null;
         if(pidArr != null) {
+            // long tida = Thread.currentThread().getId();
+            System.out.println("从null退出 " + tida);
             pidArr2 = (ArrayList<PageId>) pidArr.clone();
         }
         if(commit) {
             flushPages(tid);
-            if(pidArr == null) {
+            if(pidArr == null){
+                System.out.println("从null2退出 " + tida);
                 return;
             }
             /** bug
@@ -421,6 +428,7 @@ public class BufferPool {
                 }
                 releasePage(tid, pid);
             }
+            System.out.println("成功释放锁后退出 " + tida);
         } else {
             if(pidArr == null) {
                 return;
@@ -505,13 +513,10 @@ public class BufferPool {
                 if(currentSize == maxSize) {
                     evictPage();
                 }
-                // pageBuffer.put(pid, p);
-                // pageIdList.add(pid);
+
                 pageBuffer.remove(pid);
                 pageBuffer.put(pid, p);
-                // pageIdList.remove(pid);
-                // pageIdList.add(pid, p);
-                // currentSize++;
+
             }
             // TODO 解决bug
         }

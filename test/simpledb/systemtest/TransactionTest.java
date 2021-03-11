@@ -128,12 +128,13 @@ public class TransactionTest extends SimpleDbTestBase {
                         HashSet<Tuple> hs = new HashSet<Tuple>();
                         hs.add(t);
                         TupleIterator ti = new TupleIterator(t.getTupleDesc(), hs);
-                      //  System.out.println("333");
+                        System.out.println("333");
                         // insert this new tuple into the table
                         Insert insOp = new Insert(tr.getId(), ti, tableId);
                         Query q3 = new Query(insOp, tr.getId());
                         q3.start();
                         q3.next();
+                        System.out.println("444");
                         q3.close();
                         System.out.println("222");
                         tr.commit();

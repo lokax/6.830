@@ -59,13 +59,16 @@ public class Catalog {
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
         Table tbl = new Table(file, name, pkeyField);
-        if(IdMapTable.get(file.getId()) != null) {
-            IdMapTable.remove(file.getId());
-            IdMapTable.put(file.getId(), tbl);
-        } else {
-            IdMapTable.put(file.getId(), tbl);
-        }
 
+        for(Map.Entry<Integer, Table> entry : IdMapTable.entrySet()) {
+
+            if(entry.getValue().tblName.equals(name)) {
+                IdMapTable.remove(entry.getKey());
+                IdMapTable.put(file.getId(), tbl);
+                return;
+            }
+        }
+        IdMapTable.put(file.getId(), tbl);
         // nameMapId.put(name, file.getId());
     }
 

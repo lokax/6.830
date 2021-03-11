@@ -405,7 +405,7 @@ public class BufferPool {
             for(PageId pid : pidArr2) {
                 Page p = pageBuffer.getOrDefault(pid, null);
                 if(p != null) {
-                    discardPage(pid);
+                   // discardPage(pid);
                 }
                 releasePage(tid, pid);
             }

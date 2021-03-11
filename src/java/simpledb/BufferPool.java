@@ -14,8 +14,8 @@ class ConcurrencyMgr {
         slock,
         xlock,
     }
-
-    private final static int TIMEOUT = 1000;
+    private final static int MINTIMEOUT = 500;
+    private final static int MAXTIMEOUT = 2000;
 
     private class LockObj{
         private LockType type;
@@ -121,7 +121,7 @@ class ConcurrencyMgr {
     private synchronized void blockForLock() throws TransactionAbortedException{
         long startTime = System.currentTimeMillis();
         Random rand = new Random();
-        long timeout = rand.nextInt(TIMEOUT + 1) + 200;
+        long timeout = rand.nextInt(MAXTIMEOUT - MINTIMEOUT) + MINTIMEOUT;
 
         if(System.currentTimeMillis() - startTime > timeout) {
             System.out.println("等待超时");

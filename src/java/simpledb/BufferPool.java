@@ -65,6 +65,7 @@ class ConcurrencyMgr {
             lockList.add(tid);
         }
         public synchronized boolean upgrade(TransactionId tid) {
+            System.out.println("size" + size());
             if(size() == 1 && tid.equals(getFirst())) {
                 type = LockType.xlock;
                 return true;
@@ -148,12 +149,16 @@ class ConcurrencyMgr {
         LockObj l = lockTable.getOrDefault(pid, null);
         // long starTime = System.currentTimeMillis();
         // long timeout = 2000;
+        long tida = Thread.currentThread().getId();
+        System.out.println("thread id:"+ tida);
+        System.out.println("request lock type " + type + "and pid " + pid + "and tid " + tid);
         while(true) {
             if(l == null) {
                 l = new LockObj(type, pid);
                 l.addLockList(tid);
                 lockTable.put(pid, l);
                 addHolder(tid, pid);
+                System.out.println("新加lock + pid " + pid + "and tid " + tid);
                 return;
             }
             if(l.getType() == LockType.slock) {
@@ -162,20 +167,22 @@ class ConcurrencyMgr {
                     ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
                     // new code
                     if(pArr != null && pArr.contains(pid)) {
+                        System.out.println("已存在slock + pid " + pid + "and tid " + tid);
                         return;
                     }
                     // *********
                     l.addLockList(tid);
                     addHolder(tid, pid);
+                    System.out.println("新增加slock + pid " + pid + "and tid " + tid);
                     return;
                 } else {
                     // 请求xlock，但obj为slock时
-                    if(l.size() == 1 && l.getFirst().equals(tid)) {
-                        // 如果只有一个对象，且相等可以uppgrade
+                    ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
+                    if(pArr != null && pArr.contains(pid) && lockTable.get(pid).size() == 1) {
                         l.upgrade(tid);
+                        System.out.println("upgrade + pid " + pid + "and tid " + tid + "thid " + tida) ;
                         return;
                     } else {
-
                             blockForLock(type);
                             // wait(1000);
 
@@ -183,16 +190,19 @@ class ConcurrencyMgr {
                 }
             } else {
                 if(type == LockType.slock) {
-                    if(l.size() == 1 && l.getFirst().equals(tid)) {
+                    ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
+                    if(pArr != null && pArr.contains(pid) && lockTable.get(pid).size() == 1) {
                         l.setType(LockType.slock);
+                        System.out.println("降级 + pid " + pid + "and tid " + tid);
                         return;
+                    } else {
+                        blockForLock(type);
                     }
 
-                     blockForLock(type);
-
                 } else {
-                    if(l.size() == 1 && l.getFirst().equals(tid)) {
-                        // already locked
+                    ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
+                    if(pArr != null && pArr.contains(pid) && lockTable.get(pid).size() == 1) {
+                        System.out.println("已有xlock + pid " + pid + "and tid " + tid);
                         return;
                     } else {
                         blockForLock(type);

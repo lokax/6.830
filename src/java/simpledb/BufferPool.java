@@ -122,8 +122,8 @@ class ConcurrencyMgr {
     private synchronized void blockForLock() throws TransactionAbortedException{
        long startTime = System.currentTimeMillis();
        try {
-           wait(1000);
-           if(System.currentTimeMillis() - startTime > 1000) {
+           wait(10000);
+           if(System.currentTimeMillis() - startTime > 10000) {
                throw new TransactionAbortedException();
            }
 
@@ -201,7 +201,8 @@ class ConcurrencyMgr {
         l.lockList.remove(tid);
         if(l.size() == 0) {
             lockTable.remove(pid, l);
-        }*/
+        }
+         */
 
         ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
         if(pArr != null && pArr.contains(pid)) {
@@ -216,6 +217,7 @@ class ConcurrencyMgr {
             }
         }
         // return;
+
     }
 
 
@@ -371,7 +373,11 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
-        ArrayList<PageId> pidArr = lockMgr.getHolder(tid);
+        ArrayList<PageId> pidArr = (ArrayList<PageId>) lockMgr.getHolder(tid);
+        ArrayList<PageId> pidArr2 = null;
+        if(pidArr != null) {
+            pidArr2 = (ArrayList<PageId>) pidArr.clone();
+        }
         if(commit) {
             flushPages(tid);
             if(pidArr == null) {
@@ -384,7 +390,7 @@ public class BufferPool {
                 discardPage(pid);
                 releasePage(tid, pid);
             }*/
-            for(PageId pid : pidArr) {
+            for(PageId pid : pidArr2) {
                 Page p = pageBuffer.getOrDefault(pid, null);
                 if(p != null) {
                     discardPage(pid);
@@ -396,7 +402,7 @@ public class BufferPool {
                 return;
             }
 
-            for(PageId pid : pidArr) {
+            for(PageId pid : pidArr2) {
                 Page p = pageBuffer.getOrDefault(pid, null);
                 if(p != null) {
                     Page oldPage = p.getBeforeImage();

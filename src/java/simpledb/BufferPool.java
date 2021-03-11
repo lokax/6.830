@@ -86,7 +86,6 @@ class ConcurrencyMgr {
         holdsPage = new ConcurrentHashMap<>();
     }
 
-
     public boolean isHoldsLock(TransactionId tid, PageId pid) {
         LockObj l = lockTable.getOrDefault(pid, null);
         if(l == null || l.size() == 0) {
@@ -118,7 +117,7 @@ class ConcurrencyMgr {
         return arr;
     }
 
-    private synchronized void blockForLock() throws TransactionAbortedException{
+    private synchronized void blockForLock(LockType type) throws TransactionAbortedException{
         long startTime = System.currentTimeMillis();
         Random rand = new Random();
         long timeout = rand.nextInt(MAXTIMEOUT - MINTIMEOUT) + MINTIMEOUT;
@@ -131,6 +130,9 @@ class ConcurrencyMgr {
            wait(timeout);
            if(System.currentTimeMillis() - startTime > timeout) {
                System.out.println("等待超时2");
+               System.out.println(type);
+               long tid = Thread.currentThread().getId();
+               System.out.println("thread id:"+ tid);
                throw new TransactionAbortedException();
            }
 
@@ -174,7 +176,7 @@ class ConcurrencyMgr {
                         return;
                     } else {
 
-                            blockForLock();
+                            blockForLock(type);
                             // wait(1000);
 
                     }
@@ -186,14 +188,14 @@ class ConcurrencyMgr {
                         return;
                     }
 
-                     blockForLock();
+                     blockForLock(type);
 
                 } else {
                     if(l.size() == 1 && l.getFirst().equals(tid)) {
                         // already locked
                         return;
                     } else {
-                        blockForLock();
+                        blockForLock(type);
                     }
                 }
             }

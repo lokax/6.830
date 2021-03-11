@@ -3,10 +3,7 @@ package simpledb;
 import java.io.*;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.locks.Lock;
@@ -17,6 +14,8 @@ class ConcurrencyMgr {
         slock,
         xlock,
     }
+
+    private final static int TIMEOUT = 1000;
 
     private class LockObj{
         private LockType type;
@@ -120,10 +119,18 @@ class ConcurrencyMgr {
     }
 
     private synchronized void blockForLock() throws TransactionAbortedException{
-       long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
+        Random rand = new Random();
+        long timeout = rand.nextInt(TIMEOUT + 1) + 200;
+
+        if(System.currentTimeMillis() - startTime > timeout) {
+            System.out.println("等待超时");
+            throw new TransactionAbortedException();
+        }
        try {
-           wait(10000);
-           if(System.currentTimeMillis() - startTime > 10000) {
+           wait(timeout);
+           if(System.currentTimeMillis() - startTime > timeout) {
+               System.out.println("等待超时2");
                throw new TransactionAbortedException();
            }
 
@@ -137,6 +144,8 @@ class ConcurrencyMgr {
     public synchronized void requestLock(LockType type, TransactionId tid, PageId pid)
             throws TransactionAbortedException {
         LockObj l = lockTable.getOrDefault(pid, null);
+        // long starTime = System.currentTimeMillis();
+        // long timeout = 2000;
         while(true) {
             if(l == null) {
                 l = new LockObj(type, pid);
@@ -210,6 +219,9 @@ class ConcurrencyMgr {
             if(l != null) {
                 l.lockList.remove(tid);
                 pArr.remove(pid);
+                if(pArr.size() == 0) {
+                    holdsPage.remove(tid);
+                }
                 if(l.size() == 0) {
                     lockTable.remove(pid);
                 }

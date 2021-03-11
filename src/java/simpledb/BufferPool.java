@@ -193,6 +193,7 @@ class ConcurrencyMgr {
     }
 
     public synchronized void releaseLock(TransactionId tid, PageId pid) {
+        /**
         LockObj l = lockTable.getOrDefault(pid, null);
         if(l == null || l.size() == 0) {
             return;
@@ -200,8 +201,21 @@ class ConcurrencyMgr {
         l.lockList.remove(tid);
         if(l.size() == 0) {
             lockTable.remove(pid, l);
+        }*/
+
+        ArrayList<PageId> pArr = holdsPage.getOrDefault(tid, null);
+        if(pArr != null && pArr.contains(pid)) {
+            LockObj l = lockTable.getOrDefault(pid, null);
+            if(l != null) {
+                l.lockList.remove(tid);
+                pArr.remove(pid);
+                if(l.size() == 0) {
+                    lockTable.remove(pid);
+                }
+                notifyAll();
+            }
         }
-        return;
+        // return;
     }
 
 

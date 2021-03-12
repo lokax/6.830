@@ -68,8 +68,10 @@ public class Delete extends Operator {
             while(child.hasNext()) {
                 Tuple t = child.next();
                 try{
+                    System.out.println("before");
                     Database.getBufferPool().deleteTuple(tid, t);
                     size++;
+                    System.out.println("after");
                 }catch(IOException e) {
                     e.printStackTrace();
                 }

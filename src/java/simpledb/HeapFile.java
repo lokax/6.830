@@ -105,7 +105,7 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public synchronized void writePage(Page page) throws IOException {
+    public void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for lab1
         int pgno = page.getId().getPageNumber();
@@ -142,7 +142,7 @@ public class HeapFile implements DbFile {
                 continue;
             }
             page.insertTuple(t);
-            // page.markDirty(true, tid);
+            page.markDirty(true, tid);
             mdPage.add(page);
             return mdPage;
         }
@@ -151,14 +151,14 @@ public class HeapFile implements DbFile {
         // RecordId rid = new RecordId(pid, );
         page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
         page.insertTuple(t);
-        // page.markDirty(true, tid);
+        page.markDirty(true, tid);
         mdPage.add(page);
         return mdPage;
 
 
     }
 
-    private void appendPageToEnd() {
+    private synchronized void appendPageToEnd() {
         int pLen = numPages();
         RandomAccessFile file = null;
         try {
@@ -183,15 +183,21 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
         // some code goes here
-
         // not necessary for lab1
         ArrayList<Page> mdfPage = new ArrayList<>();
         RecordId rid = t.getRecordId();
-        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, rid.getPageId(), Permissions.READ_WRITE);
-        page.deleteTuple(t);
-        // page.markDirty(true, tid);
-        mdfPage.add(page);
-        return mdfPage;
+        PageId pid = rid.getPageId();
+        if(pid.getTableId() == getId()) {
+
+            HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+
+            page.deleteTuple(t);
+            page.markDirty(true, tid);
+            mdfPage.add(page);
+            System.out.println("after add page");
+            return mdfPage;
+        }
+        throw new DbException("HeapFile: deleteTuple: tuple.tableid != getId");
     }
 
     private class HeapFileIterator implements DbFileIterator{

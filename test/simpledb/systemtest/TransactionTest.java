@@ -118,9 +118,9 @@ public class TransactionTest extends SimpleDbTestBase {
                         Query q2 = new Query(delOp, tr.getId());
                        // System.out.println("666");;
                         q2.start();
-                     //    System.out.println("sw");
+                        System.out.println("sw");
                         q2.next();
-                     //   System.out.println("ww");
+                        System.out.println("ww");
                         q2.close();
                      //   System.out.printf("ss\n");
                      //   System.out.println("444");

@@ -255,19 +255,26 @@ public class HeapPage implements Page {
         // some code goes here
         // not necessary for lab1
         // int tupleId = equalIndex(t);
+        System.out.println("delete page tuple");
         int tupleId = t.getRecordId().getTupleNumber();
         if(t.getRecordId().getPageId() != getId()) {
+            System.out.println("1 error");
             throw new DbException("tuple is not on this page");
         }
         if(tuples[tupleId] == null) {
+            System.out.println("2 error");
             throw new DbException("tuple is not on this page");
         }
         if(!isSlotUsed(tupleId)) {
+            System.out.println("3 error");
             throw new DbException("tuple slot is already empty");
         }
         tuples[tupleId] = null;
+        System.out.println("markslot befor");
         markSlotUsed(tupleId, false);
+        System.out.println("markslot after");
         // isDirty = true;
+        System.out.println("delete page after");
 
     }
 /**
@@ -374,6 +381,7 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+        System.out.println("mark before");
         int quot = i / 8;
         int remainder = (i % 8);
         if(value) {
@@ -381,6 +389,7 @@ public class HeapPage implements Page {
         } else {
             header[quot] = (byte) (header[quot] & (~(0x1 << remainder)));
         }
+        System.out.println("mark after");
 
     }
 

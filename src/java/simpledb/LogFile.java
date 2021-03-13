@@ -522,6 +522,66 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+                // 第一阶段做redo
+                // 先到达checkpoint的offset。
+                raf.seek(0);
+                long checkOffset = raf.readLong();
+                raf.seek(checkOffset);
+                ArrayList<Long> unFinished = new ArrayList<>();
+                ArrayList<Long> beginOffset = new ArrayList<>();
+                /**
+                 * raf.writeInt(CHECKPOINT_RECORD); // 设置类型（int）
+                 *                 raf.writeLong(-1); //no tid , but leave space for convenience （无id）
+                 *
+                 *                 //write list of outstanding transactions
+                 *                 raf.writeInt(keys.size()); // 写size
+                 */
+                int type = raf.readInt();
+                assert (type == CHECKPOINT_RECORD);
+                long unused_tid = raf.readLong();
+                long taxSize = raf.readInt();
+                /**
+                 * raf.writeLong(key); // 写tid
+                 *                     //Debug.log("WRITING CHECKPOINT TRANSACTION OFFSET: " + tidToFirstLogRecord.get(key));
+                 *                     raf.writeLong(tidToFirstLogRecord.get(key)); // 写begin开始时的offset。
+                 */
+                for(int i = 0; i < taxSize; i++) {
+                    long tid = raf.readLong();
+                    long tidBeginOffset = raf.readLong();
+                    unFinished.add(tid);
+                    beginOffset.add(tidBeginOffset);
+                }
+                raf.readLong(); // 跳过LONG.SIZE的地址
+                long HeadOffset = checkOffset + INT_SIZE * 2 + LONG_SIZE + taxSize * LONG_SIZE * 2;
+                Page before = null;
+                Page after = null;
+                long tidIng1 = -1;
+                while(HeadOffset < this.currentOffset) {
+                    type = raf.readInt();
+                    tidIng1 = raf.readLong();
+                    switch (type) {
+                        case UPDATE_RECORD:
+                            readPageData(raf);
+                            after = readPageData(raf);
+                            Database.getCatalog().getDatabaseFile(after.getId().getTableId()).writePage(after); // redo
+
+                            break;
+                        case BEGIN_RECORD:
+                            
+                            break;
+                        case ABORT_RECORD:
+                            break;
+                        case COMMIT_RECORD:
+                            break;
+                        case CHECKPOINT_RECORD:
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+
+
             }
          }
     }

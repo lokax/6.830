@@ -507,7 +507,11 @@ public class BufferPool {
         if(p == null) {
             return;
         }
-        if(p.isDirty() == null) {
+        TransactionId dirtier = p.isDirty();
+        if(dirtier != null) {
+            Database.getLogFile().logWrite(dirtier, p.getBeforeImage(), p);
+            Database.getLogFile().force();
+        } else {
             return;
         }
         DbFile df = Database.getCatalog().getDatabaseFile(p.getId().getTableId());

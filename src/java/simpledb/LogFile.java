@@ -567,9 +567,11 @@ public class LogFile {
 
                             break;
                         case BEGIN_RECORD:
-                            
+                            unFinished.add(tidIng1);
+                            beginOffset.add(HeadOffset + INT_SIZE + LONG_SIZE);
                             break;
                         case ABORT_RECORD:
+
                             break;
                         case COMMIT_RECORD:
                             break;

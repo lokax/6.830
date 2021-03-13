@@ -382,6 +382,9 @@ public class BufferPool {
         if (lockList != null) {
             for (PageId pid : lockList) {
                 Page pg = pageBuffer.getOrDefault(pid, null);
+                if(pg != null && commit) {
+                    pg.setBeforeImage();
+                }
                 if (pg != null && pg.isDirty() != null) {
                     // all dirty pages are flushed and not dirty page are still in cache
                     discardPage(pid);

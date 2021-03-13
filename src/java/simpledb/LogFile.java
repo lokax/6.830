@@ -1,6 +1,7 @@
 
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
@@ -158,9 +159,9 @@ public class LogFile {
                 // live transactions (needs tidToFirstLogRecord)
                 rollback(tid);
 
-                raf.writeInt(ABORT_RECORD);
-                raf.writeLong(tid.getId());
-                raf.writeLong(currentOffset);
+                raf.writeInt(ABORT_RECORD); // 设置log type(int类型);
+                raf.writeLong(tid.getId()); // tax id (long)
+                raf.writeLong(currentOffset); // log结束有个, 本log record开始的offset(offset)
                 currentOffset = raf.getFilePointer();
                 force();
                 tidToFirstLogRecord.remove(tid.getId());
@@ -179,7 +180,7 @@ public class LogFile {
         //should we verify that this is a live transaction?
 
         raf.writeInt(COMMIT_RECORD);
-        raf.writeLong(tid.getId());
+        raf.writeLong(tid.getId()); // 和abort差不多
         raf.writeLong(currentOffset);
         currentOffset = raf.getFilePointer();
         force();
@@ -210,7 +211,7 @@ public class LogFile {
         raf.writeInt(UPDATE_RECORD);
         raf.writeLong(tid.getId());
 
-        writePageData(raf,before);
+        writePageData(raf,before);  // 多了两个数据
         writePageData(raf,after);
         raf.writeLong(currentOffset);
         currentOffset = raf.getFilePointer();
@@ -308,7 +309,7 @@ public class LogFile {
         }
         preAppend();
         raf.writeInt(BEGIN_RECORD);
-        raf.writeLong(tid.getId());
+        raf.writeLong(tid.getId());  // 和commit等差不多
         raf.writeLong(currentOffset);
         tidToFirstLogRecord.put(tid.getId(), currentOffset);
         currentOffset = raf.getFilePointer();
@@ -327,28 +328,28 @@ public class LogFile {
                 Set<Long> keys = tidToFirstLogRecord.keySet();
                 Iterator<Long> els = keys.iterator();
                 force();
-                Database.getBufferPool().flushAllPages();
-                startCpOffset = raf.getFilePointer();
-                raf.writeInt(CHECKPOINT_RECORD);
-                raf.writeLong(-1); //no tid , but leave space for convenience
+                Database.getBufferPool().flushAllPages(); // 检查点刷新所以page
+                startCpOffset = raf.getFilePointer(); // 得到当前offset
+                raf.writeInt(CHECKPOINT_RECORD); // 设置类型（int）
+                raf.writeLong(-1); //no tid , but leave space for convenience （无id）
 
                 //write list of outstanding transactions
-                raf.writeInt(keys.size());
+                raf.writeInt(keys.size()); // 写size
                 while (els.hasNext()) {
                     Long key = els.next();
                     Debug.log("WRITING CHECKPOINT TRANSACTION ID: " + key);
-                    raf.writeLong(key);
+                    raf.writeLong(key); // 写tid
                     //Debug.log("WRITING CHECKPOINT TRANSACTION OFFSET: " + tidToFirstLogRecord.get(key));
-                    raf.writeLong(tidToFirstLogRecord.get(key));
+                    raf.writeLong(tidToFirstLogRecord.get(key)); // 写begin开始时的offset。
                 }
 
                 //once the CP is written, make sure the CP location at the
                 // beginning of the log file is updated
                 endCpOffset = raf.getFilePointer();
-                raf.seek(0);
-                raf.writeLong(startCpOffset);
+                raf.seek(0);  // 定位到开头，因为开头存的checkpoint的offset
+                raf.writeLong(startCpOffset); // 写入offset
                 raf.seek(endCpOffset);
-                raf.writeLong(currentOffset);
+                raf.writeLong(currentOffset); // 写入当前offset
                 currentOffset = raf.getFilePointer();
                 //Debug.log("CP OFFSET = " + currentOffset);
             }
@@ -467,6 +468,33 @@ public class LogFile {
             synchronized(this) {
                 preAppend();
                 // some code goes here
+                long tidIng2 = tid.getId();
+                long recordBegin = tidToFirstLogRecord.get(tid.getId()); // 获得tax的begin record的开始offset。
+                raf.seek(currentOffset - LONG_SIZE);
+                assert (currentOffset - LONG_SIZE == raf.length() - LONG_SIZE);
+                long lastOffset = raf.readLong();
+                while(recordBegin < lastOffset) {
+                    raf.seek(lastOffset);
+                    int type = raf.readInt();
+                    long tidIng1 = -1;
+                    switch(type) {
+                        case UPDATE_RECORD:
+                            tidIng1 = raf.readLong();
+                            if(tidIng1 == tidIng2) {
+                                Page before = readPageData(raf);
+                                Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
+                                Database.getBufferPool().discardPage(before.getId());
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    raf.seek(lastOffset - Long.SIZE);
+                    lastOffset = raf.readLong();
+                }
+
+                raf.seek(currentOffset);
+
             }
         }
     }

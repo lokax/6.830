@@ -468,36 +468,43 @@ public class LogFile {
             synchronized(this) {
                 preAppend();
                 // some code goes here
-                long tidIng2 = tid.getId();
-                long recordBegin = tidToFirstLogRecord.get(tid.getId()); // 获得tax的begin record的开始offset。
-                raf.seek(currentOffset - LONG_SIZE);
-                assert (currentOffset - LONG_SIZE == raf.length() - LONG_SIZE);
-                long lastOffset = raf.readLong();
-                while(recordBegin < lastOffset) {
-                    raf.seek(lastOffset);
-                    int type = raf.readInt();
-                    long tidIng1 = -1;
-                    switch(type) {
-                        case UPDATE_RECORD:
-                            tidIng1 = raf.readLong();
-                            if(tidIng1 == tidIng2) {
-                                Page before = readPageData(raf);
-                                Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
-                                Database.getBufferPool().discardPage(before.getId());
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                    raf.seek(lastOffset - Long.SIZE);
-                    lastOffset = raf.readLong();
-                }
-
-                raf.seek(currentOffset);
+                rollbackHelper(tid.getId());
 
             }
         }
     }
+
+    private void rollbackHelper(long tid)
+            throws NoSuchElementException, IOException {
+        long tidIng2 = tid;
+        long recordBegin = tidToFirstLogRecord.get(tid); // 获得tax的begin record的开始offset。
+        raf.seek(currentOffset - LONG_SIZE);
+        assert (currentOffset - LONG_SIZE == raf.length() - LONG_SIZE);
+        long lastOffset = raf.readLong();
+        while(recordBegin < lastOffset) {
+            raf.seek(lastOffset);
+            int type = raf.readInt();
+            long tidIng1 = -1;
+            switch(type) {
+                case UPDATE_RECORD:
+                    tidIng1 = raf.readLong();
+                    if(tidIng1 == tidIng2) {
+                        Page before = readPageData(raf);
+                        Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
+                        Database.getBufferPool().discardPage(before.getId());
+                    }
+                    break;
+                default:
+                    break;
+            }
+            raf.seek(lastOffset - Long.SIZE);
+            lastOffset = raf.readLong();
+        }
+
+        raf.seek(currentOffset);
+
+    }
+
 
     /** Shutdown the logging system, writing out whatever state
         is necessary so that start up can happen quickly (without
@@ -564,6 +571,7 @@ public class LogFile {
                             readPageData(raf);
                             after = readPageData(raf);
                             Database.getCatalog().getDatabaseFile(after.getId().getTableId()).writePage(after); // redo
+                            // Database.getBufferPool().discardPage();
 
                             break;
                         case BEGIN_RECORD:
@@ -571,7 +579,7 @@ public class LogFile {
                             beginOffset.add(HeadOffset + INT_SIZE + LONG_SIZE);
                             break;
                         case ABORT_RECORD:
-
+                            // rollback(tidIng1);
                             break;
                         case COMMIT_RECORD:
                             break;
@@ -580,6 +588,7 @@ public class LogFile {
                         default:
                             break;
                     }
+                    HeadOffset = raf.getFilePointer() + LONG_SIZE;
                 }
 
 

@@ -488,8 +488,9 @@ public class LogFile {
             switch(type) {
                 case UPDATE_RECORD:
                     tidIng1 = raf.readLong();
+                    Page before = readPageData(raf);
+                    Page after = readPageData(raf);
                     if(tidIng1 == tidIng2) {
-                        Page before = readPageData(raf);
                         Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
                         Database.getBufferPool().discardPage(before.getId());
                     }
@@ -497,7 +498,7 @@ public class LogFile {
                 default:
                     break;
             }
-            raf.seek(lastOffset - Long.SIZE);
+            raf.seek(lastOffset - LONG_SIZE);
             lastOffset = raf.readLong();
         }
 
@@ -529,40 +530,50 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+                currentOffset = raf.length();
+                if(currentOffset - LONG_SIZE <= 0) {
+                    return;
+                }
                 // 第一阶段做redo
-                // 先到达checkpoint的offset。
+                // 先到达checkpoint的offset。;
+                // raf.seek(currentOffset - LONG_SIZE);
+
+                HashMap<Long, Long> unFinished = new HashMap<>();
+                long HeadOffset;
+                int type = -1;
+                long taxSize;
                 raf.seek(0);
                 long checkOffset = raf.readLong();
-                raf.seek(checkOffset);
-                ArrayList<Long> unFinished = new ArrayList<>();
-                ArrayList<Long> beginOffset = new ArrayList<>();
-                /**
-                 * raf.writeInt(CHECKPOINT_RECORD); // 设置类型（int）
-                 *                 raf.writeLong(-1); //no tid , but leave space for convenience （无id）
-                 *
-                 *                 //write list of outstanding transactions
-                 *                 raf.writeInt(keys.size()); // 写size
-                 */
-                int type = raf.readInt();
-                assert (type == CHECKPOINT_RECORD);
-                long unused_tid = raf.readLong();
-                long taxSize = raf.readInt();
-                /**
-                 * raf.writeLong(key); // 写tid
-                 *                     //Debug.log("WRITING CHECKPOINT TRANSACTION OFFSET: " + tidToFirstLogRecord.get(key));
-                 *                     raf.writeLong(tidToFirstLogRecord.get(key)); // 写begin开始时的offset。
-                 */
-                for(int i = 0; i < taxSize; i++) {
-                    long tid = raf.readLong();
-                    long tidBeginOffset = raf.readLong();
-                    unFinished.add(tid);
-                    beginOffset.add(tidBeginOffset);
+                if(checkOffset == -1) {
+                    raf.seek(raf.getFilePointer());
+                    HeadOffset = raf.getFilePointer();
+                } else {
+                    raf.seek(checkOffset);
+                    type = raf.readInt();
+                    System.out.println("type = " + type);
+                    assert (type == CHECKPOINT_RECORD);
+                    long unused_tid = raf.readLong();
+                    taxSize = raf.readInt();
+                    /**
+                     * raf.writeLong(key); // 写tid
+                     *                     //Debug.log("WRITING CHECKPOINT TRANSACTION OFFSET: " + tidToFirstLogRecord.get(key));
+                     *                     raf.writeLong(tidToFirstLogRecord.get(key)); // 写begin开始时的offset。
+                     */
+                    for(int i = 0; i < taxSize; i++) {
+                        long tid = raf.readLong();
+                        long tidBeginOffset = raf.readLong();
+                        tidToFirstLogRecord.put(tid, tidBeginOffset);
+                        unFinished.put(tid, tidBeginOffset);
+                    }
+                    raf.readLong(); // 跳过LONG.SIZE的地址
+                    HeadOffset = checkOffset + INT_SIZE * 2 + LONG_SIZE + taxSize * LONG_SIZE * 2 + LONG_SIZE;
                 }
-                raf.readLong(); // 跳过LONG.SIZE的地址
-                long HeadOffset = checkOffset + INT_SIZE * 2 + LONG_SIZE + taxSize * LONG_SIZE * 2;
+
+
                 Page before = null;
                 Page after = null;
                 long tidIng1 = -1;
+
                 while(HeadOffset < this.currentOffset) {
                     type = raf.readInt();
                     tidIng1 = raf.readLong();
@@ -571,24 +582,45 @@ public class LogFile {
                             readPageData(raf);
                             after = readPageData(raf);
                             Database.getCatalog().getDatabaseFile(after.getId().getTableId()).writePage(after); // redo
-                            // Database.getBufferPool().discardPage();
+                           // Database.getBufferPool().discardPage(after.getId());
 
                             break;
                         case BEGIN_RECORD:
-                            unFinished.add(tidIng1);
-                            beginOffset.add(HeadOffset + INT_SIZE + LONG_SIZE);
+                            unFinished.put(tidIng1,HeadOffset);
+                            tidToFirstLogRecord.put(tidIng1, HeadOffset);
                             break;
                         case ABORT_RECORD:
-                            // rollback(tidIng1);
+                            rollbackHelper(tidIng1);
+                            raf.seek(HeadOffset + INT_SIZE + LONG_SIZE);
+                            tidToFirstLogRecord.remove(tidIng1);
+                            unFinished.remove(tidIng1);
                             break;
                         case COMMIT_RECORD:
+                            unFinished.remove(tidIng1);
+                            tidToFirstLogRecord.remove(tidIng1);
                             break;
                         case CHECKPOINT_RECORD:
+                            taxSize = raf.readInt();
+                            raf.seek(raf.getFilePointer() + 2 * taxSize * LONG_SIZE);
                             break;
                         default:
                             break;
                     }
-                    HeadOffset = raf.getFilePointer() + LONG_SIZE;
+                    long newOffset = raf.getFilePointer() + LONG_SIZE;
+                    System.out.println(HeadOffset - LONG_SIZE);
+                    raf.seek(HeadOffset - LONG_SIZE);
+                    System.out.println(raf.readLong());
+
+                    HeadOffset = newOffset;
+                    raf.seek(HeadOffset);
+                }
+
+                if(unFinished.size() != 0) {
+                    Iterator<Long> tidItr = unFinished.keySet().iterator();
+                    while(tidItr.hasNext()) {
+                       //  rollbackHelper(tidItr.next()); // don't call rollbackHelper. semantic different;
+                        rollbackHelper(tidItr.next());
+                    }
                 }
 
 

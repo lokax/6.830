@@ -3,6 +3,7 @@ package simpledb;
 import java.io.*;
 import java.util.*;
 
+import org.w3c.dom.html.HTMLBRElement;
 import simpledb.Predicate.Op;
 
 /**
@@ -213,6 +214,32 @@ public class BTreeFile implements DbFile {
 			} else {
 				throw new DbException("internalPage should have one child at least");
 			}
+		} else {
+			Page bPage = null;
+			if(pid.pgcateg() == BTreePageId.LEAF) {
+				bPage = getPage(tid, dirtypages, pid, perm);
+				return (BTreeLeafPage) bPage;
+			}
+
+			bPage = getPage(tid, dirtypages, pid, Permissions.READ_ONLY);
+			Iterator<BTreeEntry> bPageItr = ((BTreeInternalPage) bPage).iterator();
+			BTreeEntry prevEntry = null;
+			BTreePageId bPageId = null;
+			while(bPageItr.hasNext()) {
+				prevEntry = bPageItr.next();
+				if(f.compare(Op.LESS_THAN_OR_EQ, prevEntry.getKey())) {
+					// 由于是从左到右迭代，所以遇到小于等于就可以直接返回了，而不需要关心下一个是什么情况。
+					// findLeafPage(tid, dirtypages, prevEntry.getLeftChild(), perm, f);
+					bPageId = prevEntry.getLeftChild();
+					break;
+				}
+			}
+			if(!bPageItr.hasNext()) {
+				assert (bPageId == null);
+				bPageId = prevEntry.getRightChild(); // 只有最右的可能满足或者不满足，无所谓。
+			}
+			findLeafPage(tid, dirtypages, bPageId, perm, f);
+			
 		}
 	}
 	

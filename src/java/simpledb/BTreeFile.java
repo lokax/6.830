@@ -195,8 +195,25 @@ public class BTreeFile implements DbFile {
 			Field f) 
 					throws DbException, TransactionAbortedException {
 		// some code goes here
-		
-        return null;
+
+		if(f == null) {
+			// Page bPage = getPage(tid, dirtypages, pid, perm);
+			Page bPage = null;
+			// 如果是leafpage直接返回
+			if(pid.pgcateg() == BTreePageId.LEAF) {
+				bPage = getPage(tid, dirtypages, pid, perm);
+				return (BTreeLeafPage) bPage;
+			}
+			// internalPage 只使用readonly权限
+			bPage = getPage(tid, dirtypages, pid, Permissions.READ_ONLY);
+			Iterator<BTreeEntry> bPageItr = ((BTreeInternalPage) bPage).iterator();
+			if(bPageItr.hasNext()) {
+				BTreeEntry bEntry = bPageItr.next();
+				findLeafPage(tid, dirtypages, bEntry.getLeftChild(), perm, f);
+			} else {
+				throw new DbException("internalPage should have one child at least");
+			}
+		}
 	}
 	
 	/**

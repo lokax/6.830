@@ -694,7 +694,7 @@ class BTreeInternalPageIterator implements Iterator<BTreeEntry> {
 				}
 			}
 			while (true) {
-				int entry = curEntry++;
+				int entry = curEntry++; // 后缀++
 				Field key = p.getKey(entry);
 				BTreePageId childId = p.getChildId(entry);
 				if(key != null && childId != null) {

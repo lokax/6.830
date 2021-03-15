@@ -59,7 +59,7 @@ public class BTreeLeafPage extends BTreePage {
 	 * 
 	 * @param id - the id of this page
 	 * @param data - the raw data of this page
-	 * @param key - the field which the index is keyed on
+	 * @param
 	 */
 	public BTreeLeafPage(BTreePageId id, byte[] data, int key) throws IOException {
 		super(id, key);
@@ -407,7 +407,7 @@ public class BTreeLeafPage extends BTreePage {
 			if(id.getTableId() != pid.getTableId()) {
 				throw new DbException("table id mismatch in setLeftSiblingId");
 			}
-			if(id.pgcateg() != BTreePageId.LEAF) {
+			if(id.pgcateg() != BTreePageId.LEAF) { // check type
 				throw new DbException("leftSibling must be a leaf node");
 			}
 			leftSibling = id.getPageNumber();

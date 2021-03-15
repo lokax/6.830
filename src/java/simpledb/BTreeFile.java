@@ -150,7 +150,7 @@ public class BTreeFile implements DbFile {
 		byte[] data = page.getPageData();
 		RandomAccessFile rf = new RandomAccessFile(f, "rw");
 		if(id.pgcateg() == BTreePageId.ROOT_PTR) {
-			rf.write(data);
+			rf.write(data); //直接从0开始既可以。
 			rf.close();
 		}
 		else {
@@ -195,6 +195,7 @@ public class BTreeFile implements DbFile {
 			Field f) 
 					throws DbException, TransactionAbortedException {
 		// some code goes here
+		
         return null;
 	}
 	

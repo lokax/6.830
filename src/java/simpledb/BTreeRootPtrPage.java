@@ -39,7 +39,8 @@ public class BTreeRootPtrPage implements Page {
 
 		// read in the root pointer
 		root = dis.readInt();
-		rootCategory = (int) dis.readByte();
+		rootCategory = (int) dis.readByte();  // one byte cast to int;
+											  // so the PAGE_SIZE = 9;
 
 		// read in the header pointer
 		header = dis.readInt();

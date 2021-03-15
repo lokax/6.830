@@ -210,7 +210,7 @@ public class BTreeFile implements DbFile {
 			Iterator<BTreeEntry> bPageItr = ((BTreeInternalPage) bPage).iterator();
 			if(bPageItr.hasNext()) {
 				BTreeEntry bEntry = bPageItr.next();
-				findLeafPage(tid, dirtypages, bEntry.getLeftChild(), perm, f);
+				return findLeafPage(tid, dirtypages, bEntry.getLeftChild(), perm, f);
 			} else {
 				throw new DbException("internalPage should have one child at least");
 			}
@@ -225,21 +225,23 @@ public class BTreeFile implements DbFile {
 			Iterator<BTreeEntry> bPageItr = ((BTreeInternalPage) bPage).iterator();
 			BTreeEntry prevEntry = null;
 			BTreePageId bPageId = null;
+			boolean foundFlag = false;
 			while(bPageItr.hasNext()) {
 				prevEntry = bPageItr.next();
 				if(f.compare(Op.LESS_THAN_OR_EQ, prevEntry.getKey())) {
 					// 由于是从左到右迭代，所以遇到小于等于就可以直接返回了，而不需要关心下一个是什么情况。
 					// findLeafPage(tid, dirtypages, prevEntry.getLeftChild(), perm, f);
 					bPageId = prevEntry.getLeftChild();
+					foundFlag = true;
 					break;
 				}
 			}
-			if(!bPageItr.hasNext()) {
+			if(foundFlag == false) {
 				assert (bPageId == null);
 				bPageId = prevEntry.getRightChild(); // 只有最右的可能满足或者不满足，无所谓。
 			}
-			findLeafPage(tid, dirtypages, bPageId, perm, f);
-			
+			return findLeafPage(tid, dirtypages, bPageId, perm, f);
+
 		}
 	}
 	

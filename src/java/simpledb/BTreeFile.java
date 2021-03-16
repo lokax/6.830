@@ -303,12 +303,35 @@ public class BTreeFile implements DbFile {
 			rTuples[--moveCnt] = revItr.next();
 		}
 		moveCnt = page.getNumTuples() - leftCnt;
+		// insert and delete. realloc space for tuple
 		for(int i = 0; i < moveCnt; i++) {
 			page.deleteTuple(rTuples[i]);
 			rBrother.insertTuple(rTuples[i]);
 		}
 
-		page.setRightSiblingId(rBrother.ge);
+		// set siblingId.
+		BTreePageId oldRightPageId = page.getRightSiblingId();
+		page.setRightSiblingId(rBrother.getId());
+		rBrother.setLeftSiblingId(page.getId());
+		rBrother.setRightSiblingId(oldRightPageId);
+		Field middleKey = rTuples[0].getField(keyField);
+		if(field.compare(Op.LESS_THAN_OR_EQ, rTuples[0].getField(keyField))) {
+
+		}
+
+
+		//
+		if(field.compare(Op.LESS_THAN_OR_EQ, rTuples[0].getField(keyField))) {
+			return page;
+		} else {
+			return rBrother;
+		}
+
+
+		// set parent.
+
+
+
 
 
         return null;

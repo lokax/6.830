@@ -308,6 +308,7 @@ public class BTreeFile implements DbFile {
 			page.deleteTuple(rTuples[i]);
 			rBrother.insertTuple(rTuples[i]);
 		}
+		dirtypages.put(rBrother.getId(), rBrother);
 
 		// set siblingId.
 		BTreePageId oldRightPageId = page.getRightSiblingId();
@@ -315,26 +316,29 @@ public class BTreeFile implements DbFile {
 		rBrother.setLeftSiblingId(page.getId());
 		rBrother.setRightSiblingId(oldRightPageId);
 		Field middleKey = rTuples[0].getField(keyField);
-		if(field.compare(Op.LESS_THAN_OR_EQ, rTuples[0].getField(keyField))) {
 
-		}
+		/**
+		 BTreePageId parentId = page.getParentId();
+		BTreeInternalPage parentPage =
+		*/
+		/**
+		if(field.compare(Op.LESS_THAN_OR_EQ, middleKey) {
+			page.insertTuple(t);
+		}*/
 
 
 		//
+		BTreePageId parentId = page.getParentId();
+		BTreeInternalPage parentPage = getParentWithEmptySlots(tid, dirtypages, parentId, middleKey);
+		BTreeEntry insertedEntry = new BTreeEntry(middleKey, page.getId(), rBrother.getId());
+		parentPage.insertEntry(insertedEntry);
+		rBrother.setParentId(parentPage.getParentId());
+
 		if(field.compare(Op.LESS_THAN_OR_EQ, rTuples[0].getField(keyField))) {
 			return page;
 		} else {
 			return rBrother;
 		}
-
-
-		// set parent.
-
-
-
-
-
-        return null;
 		
 	}
 	

@@ -312,10 +312,16 @@ public class BTreeFile implements DbFile {
 
 		// set siblingId.
 		BTreePageId oldRightPageId = page.getRightSiblingId();
+		// 由于getEmptyPage时的数据都是0，所以默认就是leftchildId and rightchildId are null
+		if(oldRightPageId != null) {
+			BTreeLeafPage oldRightPage = (BTreeLeafPage) getPage(tid, dirtypages, oldRightPageId, Permissions.READ_WRITE);
+			oldRightPage.setLeftSiblingId(rBrother.getId());
+		}
 		page.setRightSiblingId(rBrother.getId());
 		rBrother.setLeftSiblingId(page.getId());
 		rBrother.setRightSiblingId(oldRightPageId);
 		Field middleKey = rTuples[0].getField(keyField);
+
 
 		/**
 		 BTreePageId parentId = page.getParentId();
@@ -333,13 +339,13 @@ public class BTreeFile implements DbFile {
 		BTreeEntry insertedEntry = new BTreeEntry(middleKey, page.getId(), rBrother.getId());
 		parentPage.insertEntry(insertedEntry);
 		rBrother.setParentId(parentPage.getParentId());
-
+		page.setParentId(parentPage.getParentId());
 		if(field.compare(Op.LESS_THAN_OR_EQ, rTuples[0].getField(keyField))) {
 			return page;
 		} else {
 			return rBrother;
 		}
-		
+
 	}
 	
 	/**

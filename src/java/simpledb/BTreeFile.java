@@ -294,6 +294,23 @@ public class BTreeFile implements DbFile {
 		// the new entry.  getParentWithEmtpySlots() will be useful here.  Don't forget to update
 		// the sibling pointers of all the affected leaf pages.  Return the page into which a 
 		// tuple with the given key field should be inserted.
+		BTreeLeafPage rBrother = (BTreeLeafPage) getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
+		Iterator<Tuple> revItr = page.reverseIterator();
+		int leftCnt = (page.getNumTuples() + 1) / 2;
+		int moveCnt = page.getNumTuples() - leftCnt;
+		Tuple rTuples[] = new Tuple[moveCnt];
+		while(moveCnt > 0 && revItr.hasNext()) {
+			rTuples[--moveCnt] = revItr.next();
+		}
+		moveCnt = page.getNumTuples() - leftCnt;
+		for(int i = 0; i < moveCnt; i++) {
+			page.deleteTuple(rTuples[i]);
+			rBrother.insertTuple(rTuples[i]);
+		}
+
+		page.setRightSiblingId(rBrother.ge);
+
+
         return null;
 		
 	}

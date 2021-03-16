@@ -157,11 +157,12 @@ class LockManager {
                         // sanity check
                         assert lockTable.get(pid).getHolders().size() == 1;
                         // isAcquired = true;
+                        /** may be b+ tree bug.
                         if(reqLock == LockType.SLock) {
                             lockTable.get(pid).setType(LockType.SLock);
                             assert  lockTable.get(pid).getHolders().size() == 1 &&
                                     lockTable.get(pid).getType() == LockType.SLock;
-                        }
+                        }*/
                         return;
                     } else {
                         // otherwise block

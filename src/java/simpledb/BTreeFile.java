@@ -339,8 +339,11 @@ public class BTreeFile implements DbFile {
 		BTreeInternalPage parentPage = getParentWithEmptySlots(tid, dirtypages, parentId, middleKey);
 		BTreeEntry insertedEntry = new BTreeEntry(middleKey, page.getId(), rBrother.getId());
 		parentPage.insertEntry(insertedEntry);
-		rBrother.setParentId(parentPage.getParentId());
-		page.setParentId(parentPage.getParentId());
+		// rBrother.setParentId(parentPage.getParentId());  getParentId() bug!!!!
+		// page.setParentId(parentPage.getParentId());
+		page.setParentId(parentPage.getId());
+		rBrother.setParentId(parentPage.getId());
+
 		dirtypages.put(parentPage.getId(), parentPage);
 		if(field.compare(Op.LESS_THAN_OR_EQ, rTuples[0].getField(keyField))) {
 			return page;

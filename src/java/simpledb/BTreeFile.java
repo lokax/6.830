@@ -730,17 +730,21 @@ public class BTreeFile implements DbFile {
 		BTreePageId lSiblingId = entry.getLeftChild();
 		Iterator<Tuple> leafItr = sibling.iterator();
 		Iterator<BTreeEntry> parentItr = parent.iterator();
-		Tuple t = null;
+		int moveCnt = (sibling.getNumTuples() - page.getNumTuples()) / 2;
+		Tuple tuples[] = new Tuple[moveCnt];
 		Field key = null;
 		BTreeEntry bEntry = null;
 
 		if(isRightSibling) {
-			if (leafItr.hasNext()) {
-				t = leafItr.next();
+			while (leafItr.hasNext() && moveCnt > 0) {
+				tuples[--moveCnt] = leafItr.next();
 			}
 			key = leafItr.next().getField(keyField);
-			sibling.deleteTuple(t);
-			page.insertTuple(t);
+			for(int i = 0; i < tuples.length; i++) {
+				sibling.deleteTuple(tuples[i]);
+				page.insertTuple(tuples[i]);
+			}
+
 
 			/**
 			while(parentItr.hasNext()) {
@@ -757,12 +761,15 @@ public class BTreeFile implements DbFile {
 			parent.updateEntry(entry);
 		} else {
 			leafItr = sibling.reverseIterator();
-			if(leafItr.hasNext()) {
-				t = leafItr.next();
+			while(leafItr.hasNext() && moveCnt > 0) {
+				tuples[--moveCnt] = leafItr.next();
 			}
-			key = t.getField(keyField);
-			page.insertTuple(t);
-			sibling.deleteTuple(t);
+			key = tuples[0].getField(keyField);
+			for(int i = 0; i < tuples.length; i++) {
+				sibling.deleteTuple(tuples[i]); // 先删除后插入， 因为插入会导致rid改变为insert的那个page、
+				page.insertTuple(tuples[i]);
+			}
+
 			entry.setKey(key);
 			parent.updateEntry(entry);
 		}
@@ -906,6 +913,29 @@ public class BTreeFile implements DbFile {
 		// the sibling pointers, and make the right page available for reuse.
 		// Delete the entry in the parent corresponding to the two pages that are merging -
 		// deleteParentEntry() will be useful here
+		Iterator<Tuple> rhsItr = rightPage.iterator();
+		int moveNumber = rightPage.getNumTuples();
+		Tuple moveTuples[] = new Tuple[moveNumber];
+		int cnt = 0;
+		while(rhsItr.hasNext()) {
+			Tuple t = rhsItr.next();
+			moveTuples[cnt++] = t;
+			rightPage.deleteTuple(t);
+			leftPage.insertTuple(t);
+		}
+		BTreePageId newRhsId = rightPage.getRightSiblingId();
+		leftPage.setRightSiblingId(newRhsId);
+		if(newRhsId != null) {
+			BTreeLeafPage newRhsPage = (BTreeLeafPage) getPage(tid, dirtypages, newRhsId, Permissions.READ_WRITE);
+			newRhsPage.setLeftSiblingId(leftPage.getId());
+			dirtypages.put(newRhsId, newRhsPage);
+		}
+
+		// BTreeEntry bEntry = new BTreeEntry(moveTuples[0].getField(keyField), leftPage.getId(), rightPage.getId());
+		// parent.deleteKeyAndRightChild(bEntry);
+		setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
+		deleteParentEntry(tid, dirtypages, leftPage, parent, parentEntry);
+
 	}
 
 	/**

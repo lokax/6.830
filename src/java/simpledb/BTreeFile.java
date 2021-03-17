@@ -726,6 +726,34 @@ public class BTreeFile implements DbFile {
         // Move some of the tuples from the sibling to the page so
 		// that the tuples are evenly distributed. Be sure to update
 		// the corresponding parent entry.
+		BTreePageId rSiblingId = entry.getRightChild();
+		BTreePageId lSiblingId = entry.getLeftChild();
+		Iterator<Tuple> leafItr = sibling.iterator();
+		Iterator<BTreeEntry> parentItr = parent.iterator();
+		Tuple t = null;
+		Field key = null;
+		BTreeEntry bEntry = null;
+
+		if(isRightSibling) {
+			if (leafItr.hasNext()) {
+				t = leafItr.next();
+			}
+			key = leafItr.next().getField(keyField);
+			page.insertTuple(t);
+			sibling.deleteTuple(t);
+			while(parentItr.hasNext()) {
+				bEntry = parentItr.next();
+				if(bEntry.getLeftChild().equals(page.getId()) && bEntry.getRightChild().equals(sibling.getId())) {
+					break;
+				}
+			}
+			assert(bEntry.getLeftChild().equals(page.getId()) && bEntry.getRightChild().equals(sibling.getId()));
+			bEntry.setKey(key);
+			parent.updateEntry(bEntry);
+		} else {
+
+		}
+
 	}
 
 	/**
@@ -850,6 +878,7 @@ public class BTreeFile implements DbFile {
 	 * @param parentEntry - the entry in the parent corresponding to the leftPage and rightPage
 	 * @see #deleteParentEntry(TransactionId, HashMap, BTreePage, BTreeInternalPage, BTreeEntry)
 	 * 
+	 *
 	 * @throws DbException
 	 * @throws IOException
 	 * @throws TransactionAbortedException
@@ -941,7 +970,7 @@ public class BTreeFile implements DbFile {
 			// release the parent page for reuse
 			setEmptyPage(tid, dirtypages, parent.getId().getPageNumber());
 		}
-		else if(parent.getNumEmptySlots() > maxEmptySlots) { 
+		else if(parent.getNumEmptySlots() > maxEmptySlots) {
 			handleMinOccupancyPage(tid, dirtypages, parent);
 		}
 	}

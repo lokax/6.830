@@ -935,7 +935,6 @@ public class BTreeFile implements DbFile {
 		// parent.deleteKeyAndRightChild(bEntry);
 		setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
 		deleteParentEntry(tid, dirtypages, leftPage, parent, parentEntry);
-
 	}
 
 	/**
@@ -969,6 +968,30 @@ public class BTreeFile implements DbFile {
 		// and make the right page available for reuse
 		// Delete the entry in the parent corresponding to the two pages that are merging -
 		// deleteParentEntry() will be useful here
+		deleteParentEntry(tid, dirtypages, leftPage, parent, parentEntry);
+		Iterator<BTreeEntry> revRhsItr = rightPage.reverseIterator();
+		Iterator<BTreeEntry> revLhsItr = leftPage.reverseIterator();
+		// int moveCnt = rightPage.getNumEntries();
+		// BTreeEntry bEntrys[] = new BTreeEntry[moveCnt];
+		parentEntry.setLeftChild(revLhsItr.next().getRightChild());
+		parentEntry.setRightChild(rightPage.iterator().next().getLeftChild());
+		leftPage.insertEntry(parentEntry);
+		BTreeEntry bEntry = null;
+		// revRhsItr = rightPage.reverseIterator();
+		while(rightPage.iterator().hasNext()) {
+			// bEntrys[--moveCnt] = rhsItr.next();
+			bEntry = rightPage.iterator().next();
+			rightPage.deleteKeyAndLeftChild(bEntry);
+			leftPage.insertEntry(bEntry);
+			updateParentPointer(tid, dirtypages, leftPage.getId(), bEntry.getRightChild());
+			// leftPage.insertEntry();
+		}
+		if(!rightPage.iterator().hasNext() && bEntry != null) {
+			updateParentPointer(tid, dirtypages, leftPage.getId(), bEntry.getLeftChild());
+		}
+		dirtypages.put(leftPage.getId(), leftPage);
+		setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
+
 	}
 	
 	/**

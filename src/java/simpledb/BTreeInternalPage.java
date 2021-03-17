@@ -481,9 +481,17 @@ public class BTreeInternalPage extends BTreePage {
 
 		// find the child pointer matching the left or right child in this entry
 		int lessOrEqKey = -1;
+		System.out.println("begin");
 		for (int i=0; i<numSlots; i++) {
 			if(isSlotUsed(i)) {
+				System.out.println("有使用的");
 				if(children[i] == e.getLeftChild().getPageNumber() || children[i] == e.getRightChild().getPageNumber()) {
+					System.out.println("key :" + keys[i] + "e key:" + e.getKey());
+					if(children[i] == e.getLeftChild().getPageNumber()) {
+						System.out.println("left");
+					} else {
+						System.out.println("right");
+					}
 					if(i > 0 && keys[i].compare(Op.GREATER_THAN, e.getKey())) {
 						throw new DbException("attempt to insert invalid entry with left child " + 
 								e.getLeftChild().getPageNumber() + ", right child " +
@@ -493,6 +501,7 @@ public class BTreeInternalPage extends BTreePage {
 								" left and right keys");
 					}
 					lessOrEqKey = i;
+					System.out.println("lessOrEqKey: " + lessOrEqKey);
 					if(children[i] == e.getRightChild().getPageNumber()) {
 						children[i] = e.getLeftChild().getPageNumber();
 					}

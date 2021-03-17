@@ -739,8 +739,10 @@ public class BTreeFile implements DbFile {
 				t = leafItr.next();
 			}
 			key = leafItr.next().getField(keyField);
-			page.insertTuple(t);
 			sibling.deleteTuple(t);
+			page.insertTuple(t);
+
+			/**
 			while(parentItr.hasNext()) {
 				bEntry = parentItr.next();
 				if(bEntry.getLeftChild().equals(page.getId()) && bEntry.getRightChild().equals(sibling.getId())) {
@@ -750,8 +752,19 @@ public class BTreeFile implements DbFile {
 			assert(bEntry.getLeftChild().equals(page.getId()) && bEntry.getRightChild().equals(sibling.getId()));
 			bEntry.setKey(key);
 			parent.updateEntry(bEntry);
+			*/
+			entry.setKey(key);
+			parent.updateEntry(entry);
 		} else {
-
+			leafItr = sibling.reverseIterator();
+			if(leafItr.hasNext()) {
+				t = leafItr.next();
+			}
+			key = t.getField(keyField);
+			page.insertTuple(t);
+			sibling.deleteTuple(t);
+			entry.setKey(key);
+			parent.updateEntry(entry);
 		}
 
 	}

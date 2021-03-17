@@ -977,11 +977,11 @@ public class BTreeFile implements DbFile {
 		parentEntry.setRightChild(rightPage.iterator().next().getLeftChild());
 		leftPage.insertEntry(parentEntry);
 		BTreeEntry bEntry = null;
-		// revRhsItr = rightPage.reverseIterator();
+		// evRhsItr = rightPage.reverseIterator(); //bug
 		while(rightPage.iterator().hasNext()) {
 			// bEntrys[--moveCnt] = rhsItr.next();
 			bEntry = rightPage.iterator().next();
-			rightPage.deleteKeyAndLeftChild(bEntry);
+			rightPage.deleteKeyAndLeftChild(bEntry); // 主要还是清空bEntry的状态
 			leftPage.insertEntry(bEntry);
 			updateParentPointer(tid, dirtypages, leftPage.getId(), bEntry.getRightChild());
 			// leftPage.insertEntry();

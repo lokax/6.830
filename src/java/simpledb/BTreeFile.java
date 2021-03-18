@@ -856,15 +856,32 @@ public class BTreeFile implements DbFile {
 		// pointers of all children in the entries that were moved.
 		int moveCnt = (leftSibling.getNumEntries() - page.getNumEntries()) / 2;
 		BTreeEntry bEntrys[] = new BTreeEntry[moveCnt];
-		Iterator<BTreeEntry> lhsItr = leftSibling.iterator();
-		while(lhsItr.hasNext() && moveCnt > 0) {
-			BTreeEntry e = lhsItr.next();
+		Iterator<BTreeEntry> revlhsItr = leftSibling.reverseIterator();
+		BTreeEntry e = null;
+		while(revlhsItr.hasNext() && moveCnt > 0) {
+			e = revlhsItr.next();
 			bEntrys[--moveCnt] = e;
-			leftSibling.deleteKeyAndRightChild(e);
+		}
+		e = revlhsItr.next();
+		Field oldKey = parentEntry.getKey();
+		parentEntry.setKey(e.getKey());
+		parent.updateEntry(parentEntry);
+		BTreeEntry newEntry = new BTreeEntry(oldKey, e.getRightChild(), page.iterator().next().getLeftChild());
+		leftSibling.deleteKeyAndRightChild(e);
+		page.insertEntry(newEntry);
+		for(int i = 0; i < bEntrys.length; i++) {
 
+			leftSibling.deleteKeyAndRightChild(bEntrys[i]);
+			page.insertEntry(bEntrys[i]);
 		}
 
-
+		// deleteParentEntry(tid, dirtypages, leftSibling, parent, parentEntry);
+		// BTreeEntry newEntry = new BTreeEntry(parentEntry.getKey(), e.getRightChild(), bEntrys[0].getLeftChild());
+		// parentEntry.setLeftChild(e.getRightChild());
+		// parentEntry.setRightChild(bEntrys[0].getLeftChild());
+		// leftSibling.deleteKeyAndRightChild(e);
+		// page.insertEntry(newEntry);
+		updateParentPointers(tid, dirtypages, page);
 
 	}
 	
@@ -994,7 +1011,7 @@ public class BTreeFile implements DbFile {
 			// bEntrys[--moveCnt] = rhsItr.next();
 			bEntry = rightPage.iterator().next();
 			rightPage.deleteKeyAndLeftChild(bEntry); // 主要还是清空bEntry的状态
-			// rightPage.deleteKeyAndRightChild(bEntry);
+			//  rightPage.deleteKeyAndRightChild(bEntry);
 			leftPage.insertEntry(bEntry);
 			updateParentPointer(tid, dirtypages, leftPage.getId(), bEntry.getRightChild());
 			// leftPage.insertEntry();

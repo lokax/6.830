@@ -196,7 +196,7 @@ public class BTreeFile implements DbFile {
 			Field f) 
 					throws DbException, TransactionAbortedException {
 		// some code goes here
-
+		/**
 		if(f == null) {
 			// Page bPage = getPage(tid, dirtypages, pid, perm);
 			Page bPage = null;
@@ -232,7 +232,6 @@ public class BTreeFile implements DbFile {
 					// 由于是从左到右迭代，所以遇到小于等于就可以直接返回了，而不需要关心下一个是什么情况。
 					// findLeafPage(tid, dirtypages, prevEntry.getLeftChild(), perm, f);
 					bPageId = prevEntry.getLeftChild();
-					System.out.println("BTreeFile");;
 					foundFlag = true;
 					break;
 				}
@@ -243,6 +242,35 @@ public class BTreeFile implements DbFile {
 			}
 			return findLeafPage(tid, dirtypages, bPageId, perm, f);
 
+		}
+		 */
+		if (pid.pgcateg() == BTreePageId.LEAF) {	// base case, leaf page
+			return (BTreeLeafPage) getPage(tid, dirtypages, pid, perm);
+		}
+
+		// internal node, READ_ONLY
+		BTreeInternalPage internalPage = (BTreeInternalPage) getPage(tid, dirtypages, pid, Permissions.READ_ONLY);
+		Iterator<BTreeEntry> iter = internalPage.iterator();
+
+		BTreeEntry cur;
+		try {
+			cur = iter.next();
+		} catch (Exception e) {
+			throw new DbException("findLeafPage: Empty internal page, unexpected");
+		}
+
+		if (f == null) {	// If f is null, it finds the left-most leaf page
+			return findLeafPage(tid, dirtypages, cur.getLeftChild(), perm, f);
+		}
+
+		while (iter.hasNext() && cur.getKey().compare(Op.LESS_THAN, f)) {
+			cur = iter.next();
+		}
+
+		if (cur.getKey().compare(Op.LESS_THAN, f)) {
+			return findLeafPage(tid, dirtypages, cur.getRightChild(), perm, f);
+		} else {	// if multiple results, return the leftmost one.
+			return findLeafPage(tid, dirtypages, cur.getLeftChild(), perm, f);
 		}
 	}
 	
@@ -692,6 +720,7 @@ public class BTreeFile implements DbFile {
 			// if the left sibling is at minimum occupancy, merge with it. Otherwise
 			// steal some tuples from it
 			if(leftSibling.getNumEmptySlots() >= maxEmptySlots) {
+				System.out.println("开始merge");
 				mergeLeafPages(tid, dirtypages, leftSibling, page, parent, leftEntry);
 			}
 			else {
@@ -801,7 +830,8 @@ public class BTreeFile implements DbFile {
 	 * @throws IOException
 	 * @throws TransactionAbortedException
 	 */
-	private void handleMinOccupancyInternalPage(TransactionId tid, HashMap<PageId, Page> dirtypages, 
+	private void
+	handleMinOccupancyInternalPage(TransactionId tid, HashMap<PageId, Page> dirtypages,
 			BTreeInternalPage page, BTreeInternalPage parent, BTreeEntry leftEntry, BTreeEntry rightEntry) 
 					throws DbException, IOException, TransactionAbortedException {
 		BTreePageId leftSiblingId = null;
@@ -1017,9 +1047,9 @@ public class BTreeFile implements DbFile {
 		dirtypages.put(parent.getId(), parent);
 		// BTreeEntry bEntry = new BTreeEntry(moveTuples[0].getField(keyField), leftPage.getId(), rightPage.getId());
 		// parent.deleteKeyAndRightChild(bEntry);
-		setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
+		System.out.println("merge leaf");
 		deleteParentEntry(tid, dirtypages, leftPage, parent, parentEntry);
-
+		setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
 	}
 
 	/**
@@ -1062,6 +1092,7 @@ public class BTreeFile implements DbFile {
 		parentEntry.setLeftChild(revLhsItr.next().getRightChild());
 		parentEntry.setRightChild(rightPage.iterator().next().getLeftChild());
 		leftPage.insertEntry(parentEntry);
+
 		BTreeEntry bEntry = null;
 		// evRhsItr = rightPage.reverseIterator(); //bug
 		while(rightPage.iterator().hasNext()) {
@@ -1082,6 +1113,7 @@ public class BTreeFile implements DbFile {
 		dirtypages.put(leftPage.getId(), leftPage);
 		dirtypages.put(rightPage.getId(), rightPage);
 		dirtypages.put(parent.getId(), parent);
+		System.out.println("merge internel");;
 		setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
 	}
 
@@ -1324,7 +1356,7 @@ public class BTreeFile implements DbFile {
 //				return;
 //			}
 //		}
-
+		System.out.println("set empty");
 		// otherwise, get a read lock on the root pointer page and use it to locate 
 		// the first header page
 		BTreeRootPtrPage rootPtr = getRootPtrPage(tid, dirtypages);

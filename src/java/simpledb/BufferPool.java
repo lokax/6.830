@@ -280,6 +280,7 @@ public class BufferPool {
     	BufferPool.pageSize = DEFAULT_PAGE_SIZE;
     }
 
+
     /**
      * Retrieve the specified page with the associated permissions.
      * Will acquire a lock and may block if that lock is held by another
@@ -572,7 +573,6 @@ public class BufferPool {
                 // pageBuffer.remove(pid);
                 // currentSize--;
                 discardPage(pid);
-                System.out.println("evict");
                 return;
             }
         }

@@ -19,6 +19,7 @@ public class HeapFile implements DbFile {
 
     private File f;
     private TupleDesc td;
+    private boolean flag = false;
 
     /**
      * Constructs a heap file backed by the specified file.
@@ -146,7 +147,15 @@ public class HeapFile implements DbFile {
             mdPage.add(page);
             return mdPage;
         }
-        appendPageToEnd();
+        // 需要处理当A tax在调用appenPageToEnd的时候， B tax阻塞在该调用上。
+        // 看起来没啥问题，实则在A添加完后就有一个新的空页，B也能用，B不应该在去添加。
+        int oldPageNum = numPages();
+        synchronized (this) {
+            if(oldPageNum == numPages()) {
+                appendPageToEnd();
+            }
+        }
+
         pid = new HeapPageId(getId(), numPages() - 1);
         // RecordId rid = new RecordId(pid, );
         page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
@@ -194,7 +203,6 @@ public class HeapFile implements DbFile {
             page.deleteTuple(t);
             page.markDirty(true, tid);
             mdfPage.add(page);
-            System.out.println("after add page");
             return mdfPage;
         }
         throw new DbException("HeapFile: deleteTuple: tuple.tableid != getId");
